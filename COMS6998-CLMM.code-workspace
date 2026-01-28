@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../coding/kretsinger"
+		},
+		{
+			"path": "../Latex-Examples"
+		},
+		{
+			"path": "../STAT8101-AppliedCausality"
+		}
+	],
+	"settings": {
+		"chatgpt.openOnStartup": false
+	}
+}
