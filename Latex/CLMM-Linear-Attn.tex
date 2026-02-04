@@ -1,0 +1,63 @@
+\documentclass[12pt]{article}
+
+\newcommand{\duedate}{02/04/2026}
+\newcommand{\assignment}{Linear Attention and State Space Models}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{Linear Attention and State Space Models}
+
+\paragraph{Motivation.}
+Transformer self-attention scales quadratically with sequence length, motivating alternative formulations
+that enable long-context modeling with linear memory and constant-time inference.
+
+\paragraph{Transformers as RNNs.}
+Linear attention reformulates self-attention as a recurrent update by expressing attention as a kernelized
+dot product, allowing the model to maintain a fixed-size hidden state that summarizes past context.
+
+\paragraph{Linearized Attention.}
+By replacing the softmax kernel with a feature map, attention outputs can be computed using accumulated outer
+products of keys and values, reducing memory growth from sequence length to hidden-state size.
+
+\paragraph{Recurrent State Update.}
+The attention state admits a recursive update rule, enabling constant-time inference by updating the state
+with each new token rather than recomputing attention over the full history.
+
+\paragraph{Memory Capacity Limits.}
+Outer-product memory states have finite rank, implying that beyond a certain number of stored key-value
+pairs, interference arises similarly to capacity limits in Hopfield networks.
+
+\paragraph{DeltaNet and Fast Weights.}
+DeltaNet introduces a learned overwrite rule that selectively replaces existing memories, interpreting memory
+updates as online least-squares optimization and linking linear attention to fast weight programming.
+
+\paragraph{Memory as Optimization.}
+Viewing memory updates as gradient descent enables generalization beyond linear maps, culminating in
+Test-Time Training (TTT), where the hidden state itself is a learnable model updated online.
+
+\paragraph{Test-Time Training.}
+TTT treats the hidden state as neural network parameters optimized during inference via self-supervised
+objectives, blurring the boundary between memory, learning, and inference.
+
+\paragraph{State Space Models.}
+State Space Models compress sequence history into a latent dynamical system, enabling linear-time training
+and constant-time inference by evolving a hidden state governed by learned transition operators.
+
+\paragraph{Selective State Spaces (Mamba).}
+Mamba introduces input-dependent parameterization of state updates, allowing selective forgetting and
+retention while preserving efficient parallel computation.
+
+\paragraph{Unified Perspective.}
+Modern sequence models form a hierarchy from attention-based lookup to dynamic compression and online
+learning, unifying transformers, fast-weight memories, and state space models under a common recurrent framework.
+
+\end{document}
