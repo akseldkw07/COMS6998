@@ -1,0 +1,70 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{02/10/2026}
+\newcommand{\assignment}{Dark Experience for General Continual Learning}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{Dark Experience for General Continual Learning}
+
+\paragraph{Motivation.}
+Continual learning methods often rely on complex mechanisms such as gradient constraints or parameter
+regularization, motivating the search for simpler replay-based approaches that are effective across a wide
+range of continual learning settings.
+
+\paragraph{Problem Setting.}
+The learner receives a sequence of tasks or data batches and must learn new information without access to the
+full historical dataset, while preserving performance on previously learned tasks.
+
+\paragraph{Core Idea.}
+Dark Experience Replay (DER) proposes storing a small buffer of past examples paired with the model’s past
+output logits, and using these stored logits as soft targets during replay to mitigate catastrophic forgetting.
+
+\paragraph{Dark Knowledge.}
+Instead of replaying hard labels, DER replays the model’s previous predictions, preserving richer information
+about inter-class relationships and decision boundaries learned at earlier stages.
+
+\paragraph{Replay Objective.}
+Training alternates between optimizing the loss on current-task data and a distillation-style loss that
+matches the model’s current outputs to the stored logits on replayed examples.
+
+\paragraph{General Applicability.}
+DER applies uniformly across task-incremental, class-incremental, domain-incremental, and task-free continual
+learning settings without requiring task identity at test time.
+
+\paragraph{Comparison to Experience Replay.}
+While standard experience replay mitigates forgetting by revisiting old samples, DER improves stability by
+constraining the function outputs directly, rather than only reinforcing hard labels.
+
+\paragraph{Relation to Knowledge Distillation.}
+DER can be interpreted as online self-distillation, where the model acts as its own teacher across time,
+transferring knowledge from earlier parameter configurations to later ones.
+
+\paragraph{Computational Simplicity.}
+DER avoids quadratic programs, Fisher matrix estimation, or architectural modifications, requiring only a
+replay buffer and an additional loss term during training.
+
+\paragraph{Empirical Results.}
+Experiments demonstrate that DER consistently outperforms or matches more complex continual learning methods
+across benchmarks, establishing it as a strong baseline.
+
+\paragraph{Limitations.}
+DER depends on the quality and diversity of the replay buffer, and storing logits increases memory
+requirements relative to storing inputs alone.
+
+\paragraph{Key Takeaway.}
+Dark Experience Replay shows that simple replay combined with output-level distillation is a powerful and
+general strategy for continual learning, reframing forgetting as a function mismatch rather than a parameter
+drift problem.
+
+\end{document}
