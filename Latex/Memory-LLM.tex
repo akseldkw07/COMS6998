@@ -1,0 +1,52 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{02/10/2026}
+\newcommand{\assignment}{MEMORYLLM}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{MEMORYLLM}
+
+\paragraph{Motivation.}
+Large language models encode knowledge implicitly in their parameters and operate within fixed context
+windows, limiting their ability to maintain persistent state or accumulate long-term memory across interactions.
+
+\paragraph{Core Idea.}
+MEMORYLLM introduces explicit, learnable memory slots that persist across inputs, allowing the model to
+maintain and update a structured internal state separate from transient token representations.
+
+\paragraph{Memory Mechanism.}
+A fixed set of memory vectors is jointly processed with input tokens via attention, and read/write operations
+update these memory slots over time, enabling continuous state evolution beyond a single context window.
+
+\paragraph{Separation of Roles.}
+Token embeddings handle local processing and immediate context, while memory vectors store longer-term
+information, preventing interference between short-term computation and persistent knowledge.
+
+\paragraph{Persistent State.}
+Unlike segment-level recurrence mechanisms, MEMORYLLM maintains memory across sessions or extended
+interactions, supporting multi-step reasoning, tool use, and stateful behavior.
+
+\paragraph{Relation to Continual Learning.}
+The architecture resembles continual learning systems in that it accumulates information incrementally in
+explicit memory rather than solely modifying model parameters, thereby reducing destructive interference.
+
+\paragraph{Comparison to Recurrent Memory Transformer.}
+Where RMT focuses on compressing long sequences through segment recurrence, MEMORYLLM emphasizes long-lived,
+persistent memory suitable for agent-like applications and interactive settings.
+
+\paragraph{Key Takeaway.}
+MEMORYLLM reframes large language models as stateful systems with explicit memory substrates, separating
+transient attention-based computation from persistent storage and enabling scalable, long-term reasoning.
+
+\end{document}

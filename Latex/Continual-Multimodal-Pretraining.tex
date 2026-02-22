@@ -1,0 +1,65 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.65in]{geometry}
+
+\newcommand{\duedate}{02/24/2026}
+\newcommand{\assignment}{Continual Multimodal Pretraining}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{A Practitioner's Guide to Continual Multimodal Pretraining}
+
+\paragraph{Motivation.}
+Multimodal foundation models (e.g., vision-language models) are typically pretrained on massive static
+datasets. In practice, however, data evolves over time and arrives sequentially. Continual multimodal
+pretraining (CMP) studies how to update multimodal models without degrading prior capabilities.
+
+\paragraph{Core Challenges.}
+Continual multimodal learning faces unique issues:
+\begin{itemize}
+		\item Cross-modal alignment drift (vision and language embeddings desynchronize).
+		\item Catastrophic forgetting of earlier modalities or domains.
+		\item Replay inefficiency at multimodal scale.
+\end{itemize}
+
+\paragraph{Empirical Study.}
+The paper systematically evaluates continual pretraining strategies on vision-language models under domain
+shifts and modality imbalance.
+
+Methods analyzed include:
+\begin{itemize}
+		\item Finetuning
+		\item Rehearsal-based replay
+		\item Regularization methods
+		\item Parameter-efficient tuning
+\end{itemize}
+
+\paragraph{Key Observations.}
+\begin{itemize}
+		\item Naive finetuning severely degrades zero-shot transfer.
+		\item Replay is critical but must preserve cross-modal alignment.
+		\item Parameter-efficient methods mitigate forgetting while controlling compute.
+		\item Continual multimodal pretraining is substantially more fragile than unimodal CL.
+\end{itemize}
+
+\paragraph{Practical Recommendations.}
+\begin{itemize}
+		\item Maintain balanced replay across modalities.
+		\item Monitor alignment metrics, not just downstream accuracy.
+		\item Use lightweight adaptation modules rather than full-model updates.
+\end{itemize}
+
+\paragraph{Takeaway.}
+Continual multimodal pretraining is not merely “CL + multimodality.” Cross-modal coupling introduces new
+failure modes. Stable long-term multimodal learning requires explicit mechanisms to preserve representational
+alignment across modalities and time.
+
+\end{document}
