@@ -1,0 +1,57 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.65in]{geometry}
+
+\newcommand{\duedate}{02/10/2026}
+\newcommand{\assignment}{Recurrent Memory Transformer}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{Recurrent Memory Transformer}
+
+\paragraph{Motivation.}
+Standard Transformers mix local token representations with global context and scale quadratically in sequence
+length, while Transformer-XL extends context via cached hidden states but entangles token and memory
+representations and restricts gradient flow across segments.
+
+\paragraph{Core Idea.}
+The Recurrent Memory Transformer (RMT) augments a vanilla Transformer with dedicated memory tokens that are
+prepended for reading and appended for writing, allowing explicit storage and recurrent propagation of
+compressed sequence information across segments.
+
+\paragraph{Memory Mechanism.}
+At each segment, memory tokens are processed jointly with input tokens through all Transformer layers, and
+the output memory tokens are passed forward as the memory state for the next segment, enabling segment-level
+recurrence without modifying internal Transformer layers.
+
+\paragraph{Architectural Distinction.}
+Unlike Transformer-XL, which caches layer-wise hidden states, RMT uses a fixed number of explicit memory
+vectors, reducing representation mixing and enabling deeper memory processing as the same memory tokens
+traverse the network repeatedly.
+
+\paragraph{Backpropagation Through Time.}
+RMT allows gradients to flow across segments via truncated backpropagation through time, improving long-range
+credit assignment compared to stop-gradient mechanisms in Transformer-XL.
+
+\paragraph{Empirical Findings.}
+On synthetic sequence tasks such as Copy and Reverse, RMT maintains accuracy across long segment chains where
+Transformer-XL degrades, and on WikiText-103 it achieves competitive perplexity with significantly smaller memory sizes.
+
+\paragraph{Interpretation.}
+RMT can be viewed as a recurrent compression mechanism that separates transient token processing from
+persistent storage, enabling efficient long-context modeling while preserving compatibility with pretrained
+Transformer architectures.
+
+\paragraph{Key Takeaway.}
+By introducing explicit, recurrent memory tokens without altering Transformer internals, RMT provides a
+simple yet powerful framework for long-sequence modeling based on structured memory rather than hidden-state caching.
+
+\end{document}

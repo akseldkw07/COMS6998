@@ -1,0 +1,70 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.65in]{geometry}
+
+\newcommand{\duedate}{02/24/2026}
+\newcommand{\assignment}{Representation Learning for Continual Learning}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+% \section*{Representational Continuity for Unsupervised Continual Learning}
+
+\paragraph{Motivation.}
+Most continual learning (CL) methods assume supervised labels and focus on preserving task-specific decision
+boundaries. However, real-world data streams are often unlabeled and non-stationary. This paper studies
+\emph{unsupervised continual learning (UCL)}, where the objective is to learn feature representations
+sequentially without catastrophic forgetting.
+
+\paragraph{Core Hypothesis.}
+Unsupervised representations are inherently more robust to forgetting because they learn general-purpose
+features rather than task-specific discriminative boundaries.
+
+\paragraph{Methodology.}
+The authors adapt modern self-supervised learning methods—\textbf{SimSiam} and \textbf{Barlow Twins}—to the
+continual learning setting. Representations are trained sequentially across tasks and evaluated using a
+frozen encoder with a KNN classifier.
+
+They extend several supervised CL strategies to UCL:
+\begin{itemize}
+		\item Regularization (Synaptic Intelligence)
+		\item Architectural expansion (Progressive Neural Networks)
+		\item Rehearsal (Dark Experience Replay)
+\end{itemize}
+
+They additionally propose \textbf{Lifelong Unsupervised Mixup (LUMP)}, which interpolates current-task
+examples with replay-buffer samples:
+\[
+		\tilde{x}_{i,\tau} = \lambda x_{i,\tau} + (1-\lambda)x_{j,M}
+\]
+This encourages linear behavior across tasks and mitigates representational drift.
+
+\paragraph{Key Findings.}
+\begin{itemize}
+		\item UCL significantly reduces catastrophic forgetting compared to supervised CL.
+		\item Simple finetuning in UCL often outperforms sophisticated supervised CL methods.
+		\item UCL generalizes better to out-of-distribution (OOD) tasks.
+		\item UCL is more robust in few-shot settings.
+		\item Loss landscapes of UCL are flatter and smoother than supervised CL.
+\end{itemize}
+
+\paragraph{Representational Analysis.}
+Using CKA similarity and $\ell_2$ parameter distance:
+\begin{itemize}
+		\item Two independent UCL models are more similar to each other than two supervised models.
+		\item Lower layers remain similar across methods; higher layers diverge.
+		\item UCL representations produce coherent, perceptually meaningful feature maps even for earlier tasks.
+\end{itemize}
+
+\paragraph{Conclusion.}
+Unsupervised continual learning yields more stable, transferable representations than supervised CL. Learning
+invariant, general-purpose features implicitly regularizes the learning dynamics and reduces forgetting.
+
+\end{document}
