@@ -1,8 +1,7 @@
 \documentclass[12pt]{article}
-\usepackage[margin=0.65in]{geometry}
 
 \newcommand{\duedate}{02/24/2026}
-\newcommand{\assignment}{Continual Multimodal Pretraining}
+\newcommand{\assignment}{Continual Multimodal Pretraining (FoMo-in-Flux): Summary}
 
 \newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
 \newcommand{\email}{adk2164@columbia.edu}
@@ -15,51 +14,144 @@
 \begin{document}
 \psetheader %% DO NOT CHANGE THIS LINE
 
-\section*{A Practitioner's Guide to Continual Multimodal Pretraining}
+\section*{A Practitioner's Guide to Continual Multimodal Pretraining (FoMo-in-Flux) --- Section-Ordered Summary}
 
-\paragraph{Motivation.}
-Multimodal foundation models (e.g., vision-language models) are typically pretrained on massive static
-datasets. In practice, however, data evolves over time and arrives sequentially. Continual multimodal
-pretraining (CMP) studies how to update multimodal models without degrading prior capabilities.
+\section{Introduction}
+\paragraph{Summary.} The paper studies \emph{continual multimodal pretraining} (CMP): updating a pretrained
+vision--language foundation model over time as new data pools arrive, while preserving zero-shot
+generalization and accumulating new capability under realistic compute and data constraints.
+\paragraph{Critique.} The motivation is strong and production-relevant, but the framing often assumes
+continued access to substantial pretraining-like data or good proxies; settings with strict privacy, access
+revocation, or severe distribution shifts may behave differently.
 
-\paragraph{Core Challenges.}
-Continual multimodal learning faces unique issues:
-\begin{itemize}
-		\item Cross-modal alignment drift (vision and language embeddings desynchronize).
-		\item Catastrophic forgetting of earlier modalities or domains.
-		\item Replay inefficiency at multimodal scale.
-\end{itemize}
+\section{Categorizing Continual Pretraining: A Versioning Perspective}
+\paragraph{Summary.} CMP is framed as \emph{model versioning}: a base model is iteratively updated into a
+sequence of versions, and evaluation should reflect both retention of base functionality and acquisition of
+new knowledge rather than only end-of-sequence performance.
+\paragraph{Critique.} The versioning lens clarifies what “good” continual pretraining should mean, but it
+risks underspecifying which capabilities matter (e.g., safety, calibration, robustness, modality-specific
+behavior) and how to aggregate them into decision-relevant metrics.
 
-\paragraph{Empirical Study.}
-The paper systematically evaluates continual pretraining strategies on vision-language models under domain
-shifts and modality imbalance.
+\section{The FoMo-in-Flux Benchmark}
+\subsection{Creation}
+\paragraph{Summary.} The benchmark is designed to emulate deployment-like update streams for multimodal
+models, where the learner receives sequential update pools and must remain broadly useful as the world changes.
+\paragraph{Critique.} Any benchmark necessarily reflects design choices (update domains, shift severity,
+modality balance); results may be sensitive to these choices, so external validity should be tested with
+additional streams and stress tests.
 
-Methods analyzed include:
-\begin{itemize}
-		\item Finetuning
-		\item Rehearsal-based replay
-		\item Regularization methods
-		\item Parameter-efficient tuning
-\end{itemize}
+\subsection{Pipeline, Compute Budgeting and Data Restrictions}
+\paragraph{Summary.} Each update step is run under a fixed compute budget (e.g., measured in accelerator
+FLOPs/MAFs), and training uses a mixture of (i) a pretraining pool, (ii) the current update pool, and (iii) a
+memory buffer containing samples from past update pools; this forces methods to trade off stability and
+plasticity under realistic resource constraints.
+\paragraph{Critique.} Fixing compute is principled, but it can entangle “method quality” with “hyperparameter
+efficiency”; methods that are more sensitive to scheduling or batch composition may appear worse without
+extensive tuning.
 
-\paragraph{Key Observations.}
-\begin{itemize}
-		\item Naive finetuning severely degrades zero-shot transfer.
-		\item Replay is critical but must preserve cross-modal alignment.
-		\item Parameter-efficient methods mitigate forgetting while controlling compute.
-		\item Continual multimodal pretraining is substantially more fragile than unimodal CL.
-\end{itemize}
+\subsection{Designing Data-Centric Task-Sequences}
+\paragraph{Summary.} Update steps are constructed in a data-centric way (not necessarily clean task
+boundaries), emphasizing how data mixtures, domain shifts, and modality imbalance drive continual pretraining behavior.
+\paragraph{Critique.} The task-free, data-centric setup is realistic, but it complicates diagnosis: when
+performance changes, it can be unclear whether the driver is domain novelty, class distribution shift,
+caption style drift, or modality imbalance.
 
-\paragraph{Practical Recommendations.}
-\begin{itemize}
-		\item Maintain balanced replay across modalities.
-		\item Monitor alignment metrics, not just downstream accuracy.
-		\item Use lightweight adaptation modules rather than full-model updates.
-\end{itemize}
+\subsection{Verifying Downstream Datasets: Finetuning must improve Performance}
+\paragraph{Summary.} The benchmark includes checks to ensure update data are meaningful---i.e., that
+finetuning on them can improve relevant downstream performance---so “knowledge accumulation” is not an
+artifact of noisy or uninformative updates.
+\paragraph{Critique.} This is a good safeguard, though the choice of downstream evaluations can still bias
+conclusions (e.g., improvements may be narrow, or rely on shortcut cues not captured by the downstream suite).
 
-\paragraph{Takeaway.}
-Continual multimodal pretraining is not merely “CL + multimodality.” Cross-modal coupling introduces new
-failure modes. Stable long-term multimodal learning requires explicit mechanisms to preserve representational
-alignment across modalities and time.
+\section{Experimental Setup}
+\paragraph{Summary.} The experimental protocol evaluates a continual sequence of model versions using two
+headline metrics: \emph{zero-shot retention} (preserving base generalization) and \emph{knowledge
+accumulation} (improving on update-relevant evaluations), producing trajectories over time for different
+continual strategies.
+\paragraph{Critique.} The two-axis view is very interpretable, but it compresses multimodal behavior into two
+scalars; it can hide modality-specific degradation (vision vs text), alignment drift, calibration changes,
+and robustness failures.
+
+\section{Continual Pretraining: A Method Perspective}
+\subsection{Parameter-efficient Finetuning and Continual Learning}
+\paragraph{Summary.} Parameter-efficient methods (e.g., adapter-/LoRA-style updates) often improve retention
+relative to full finetuning by restricting update directions, reducing destructive interference and helping
+keep the model closer to the pretrained basin.
+\paragraph{Critique.} Parameter efficiency is not automatically continual-learning optimal: if the update
+stream requires substantial representational change, constrained updates can bottleneck accumulation or
+concentrate changes in a way that destabilizes alignment.
+
+\subsection{On the Benefits of Model Merging Techniques}
+\paragraph{Summary.} Model merging (e.g., averaging or composing deltas relative to a base model) exhibits a
+promising continual dynamic: good retention at short horizons and improved retention across the full sequence
+while still achieving substantial accumulation, often surpassing full finetuning and some parameter-efficient
+baselines in the retention--accumulation tradeoff.
+\paragraph{Critique.} Merging relies on compatibility assumptions (shared basin connectivity, small deltas,
+coordinated cross-modal alignment); failure modes (sharp minima, conflicting updates, representation
+permutation issues) are acknowledged implicitly but not fully characterized or predicted by diagnostics.
+
+\section{Continual Pretraining: General Training Recipes}
+\subsection{Learning Rates, Schedules and Meta-Schedules}
+\paragraph{Summary.} The paper emphasizes task-/time-dependent learning-rate control (e.g., autoregressive
+cosine schedules or “infinite” decays) to avoid aggressive resets that can induce forgetting; schedules that
+progressively shrink update magnitudes tend to improve retention while still permitting accumulation.
+\paragraph{Critique.} The schedule guidance is practical, but still heuristic; a stronger story would connect
+schedule adaptation to measurable signals (e.g., alignment drift, gradient conflict, buffer fit) rather than
+relying on hand-designed meta-schedules.
+
+\subsection{Scaling up Model and Compute Budgets}
+\paragraph{Summary.} Compute scaling interacts with continual dynamics: larger budgets can increase
+accumulation but may also exacerbate drift unless tempered by replay, constrained updates, merging, or
+conservative schedules, making “more compute” an ambiguous lever.
+\paragraph{Critique.} This is an important point, though it would benefit from clearer prescriptions (e.g.,
+when extra compute should go to replay vs current data vs base pool sampling).
+
+\subsection{Model-specific tuning choices in compute-restricted scenarios}
+\paragraph{Summary.} When compute is tight, implementation details matter: which layers to adapt, how to
+allocate steps across mixture components, and how to tune optimizer hyperparameters can dominate outcomes, so
+method comparisons must be paired with careful tuning under the same budget.
+\paragraph{Critique.} This is realistic but also a reproducibility risk: without standardized tuning
+procedures, conclusions can be sensitive to small choices and may not transfer cleanly across architectures.
+
+\subsection{Softmax Temperatures for Contrastive Losses --- Not Too Hot!}
+\paragraph{Summary.} Contrastive objectives are sensitive to the softmax temperature; overly “hot” settings
+can destabilize training and worsen retention by amplifying noisy gradients, whereas conservative temperature
+choices improve stability in continual updates.
+\paragraph{Critique.} The advice is valuable, but the mechanism could be sharpened by connecting temperature
+to gradient variance and alignment drift metrics; additionally, optimal temperature may depend on modality
+balance and batch composition.
+
+\section{Continual Pretraining: A Data-Centric Perspective}
+\subsection{Deployment scenarios impact continual pretrainability}
+\paragraph{Summary.} Continual pretrainability depends strongly on the deployment data stream: the severity
+of domain shifts, modality imbalance, and temporal drift shape whether models can accumulate knowledge
+without sacrificing base capabilities.
+\paragraph{Critique.} This is convincing, but it suggests a need for standardized scenario taxonomies;
+otherwise, “CMP success” may be benchmark-specific rather than a general property of methods.
+
+\subsection{Data mixtures inform knowledge accumulation and zero-shot retention}
+\paragraph{Summary.} The mixture strategy (sampling from pretraining pool, current update pool, and replay
+buffer) is a primary control knob for the stability--plasticity tradeoff; mixing in base-like data and replay
+improves retention, while emphasizing current updates increases accumulation.
+\paragraph{Critique.} Mixture tuning is powerful but operationally expensive: it requires storing and
+sampling large buffers and/or maintaining access to base data, which may be infeasible at web scale or under
+access constraints.
+
+\subsection{Choice of pretraining data pool significantly impacts zero-shot retention}
+\paragraph{Summary.} Retention is not only about methods but also about \emph{what} base distribution is used
+as the anchor pool; better-chosen anchor data can preserve broad generalization more effectively across long
+update horizons.
+\paragraph{Critique.} This raises a practical concern: “good anchors” may be hard to define without leakage
+into evaluations, and optimal anchors may differ by deployment; the paper motivates the issue well but cannot
+fully resolve it.
+
+\section{Conclusion}
+\paragraph{Summary.} CMP is not “continual learning plus another modality”; cross-modal coupling introduces
+alignment drift and new failure modes, and effective CMP requires jointly managing method choice (e.g.,
+merging or parameter-efficient tuning), training recipes (schedules, temperatures, compute allocation), and
+data strategies (mixtures, anchors, replay) to trace favorable retention--accumulation trajectories over time.
+\paragraph{Critique.} The work provides a strong empirical map and practical guidance, but deeper mechanistic
+diagnostics (layer-wise alignment drift, representation geometry, predictive indicators of merge success)
+would strengthen both understanding and deployment reliability.
 
 \end{document}
