@@ -1,0 +1,150 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.65in]{geometry}
+
+\newcommand{\duedate}{}
+\newcommand{\assignment}{Differentiable Neural Computers}
+
+\newcommand{\name}{Aksel Kretsinger-Walters}
+\newcommand{\email}{}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex}
+
+\begin{document}
+\psetheader
+
+\section*{Differentiable Neural Computers}
+
+\paragraph{Motivation.}
+Standard neural networks struggle with tasks requiring structured memory and algorithmic reasoning.
+Recurrent networks can store information in hidden states, but this capacity is limited and difficult
+to control. Differentiable Neural Computers (DNCs) augment neural networks with an explicit,
+differentiable external memory that allows models to store, retrieve, and manipulate information
+similar to traditional computers.
+
+\paragraph{Architecture.}
+A DNC consists of two main components:
+
+\begin{itemize}
+		\item A \textbf{controller} (typically an LSTM) that processes inputs.
+		\item An external \textbf{memory matrix} that stores information across time.
+\end{itemize}
+
+The memory is represented as
+
+\[
+		M_t \in \mathbb{R}^{N \times W}
+\]
+
+where $N$ is the number of memory slots and $W$ is the width of each slot.
+
+At each timestep the controller produces an interface vector which determines:
+
+\begin{itemize}
+		\item where to write
+		\item where to read
+		\item what content to store
+\end{itemize}
+
+These operations are differentiable, enabling end-to-end training with gradient descent.
+
+\paragraph{Memory Addressing.}
+The model uses two addressing mechanisms.
+
+\textbf{Content-based addressing}
+
+\[
+		w^c_i = \frac{\exp(\beta K(k, M_i))}{\sum_j \exp(\beta K(k, M_j))}
+\]
+
+where $K(\cdot,\cdot)$ measures similarity between the key and memory rows.
+
+\textbf{Temporal addressing}
+
+The DNC tracks a \emph{temporal link matrix} that records the order in which memory
+locations were written. This enables forward and backward traversal through stored
+sequences.
+
+\paragraph{Memory Allocation.}
+To avoid overwriting useful information, the model tracks memory usage.
+Unused locations are allocated preferentially when writing new information.
+
+This enables the system to dynamically grow stored data structures
+during computation.
+
+\paragraph{Read and Write Heads.}
+
+The network maintains multiple read and write heads.
+
+Write heads determine
+
+\[
+		M_t = M_{t-1} (1 - w^w_t e_t^\top) + w^w_t v_t^\top
+\]
+
+where
+
+\begin{itemize}
+		\item $w^w_t$ is the write weighting
+		\item $e_t$ is the erase vector
+		\item $v_t$ is the write vector
+\end{itemize}
+
+Read heads produce read vectors
+
+\[
+		r_t = M_t^\top w^r_t
+\]
+
+which are returned to the controller.
+
+\paragraph{Capabilities.}
+
+The architecture allows neural networks to learn algorithmic behaviors such as
+
+\begin{itemize}
+		\item graph traversal
+		\item path finding
+		\item question answering
+		\item relational reasoning
+\end{itemize}
+
+These tasks require structured memory and sequential retrieval.
+
+\paragraph{Key Results.}
+
+The paper demonstrates strong performance on several reasoning tasks:
+
+\begin{itemize}
+		\item family tree inference
+		\item graph navigation
+		\item synthetic question answering
+\end{itemize}
+
+The model learns to store structured representations and retrieve them
+in ways resembling classical data structures.
+
+\paragraph{Limitations.}
+
+Despite its flexibility, the DNC architecture has several drawbacks:
+
+\begin{itemize}
+		\item Training instability due to complex memory dynamics
+		\item Large computational overhead from maintaining link matrices
+		\item Difficulty scaling to very large memories
+\end{itemize}
+
+As a result, later work explored simpler memory mechanisms such as attention-based
+transformers.
+
+\paragraph{Takeaway.}
+
+Differentiable Neural Computers represent an early attempt to combine
+neural networks with explicit algorithmic memory. While later architectures
+such as transformers replaced many of these mechanisms, DNCs introduced
+important ideas about differentiable memory addressing and structured
+neural computation.
+
+\end{document}

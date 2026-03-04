@@ -1,0 +1,132 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.65in]{geometry}
+
+\newcommand{\duedate}{}
+\newcommand{\assignment}{End-To-End Memory Networks}
+
+\newcommand{\name}{Aksel Kretsinger-Walters}
+\newcommand{\email}{}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex}
+
+\begin{document}
+\psetheader
+
+\section*{End-To-End Memory Networks}
+
+\paragraph{Motivation.}
+
+Many reasoning tasks require models to consult stored knowledge before
+producing an answer. Traditional neural networks compress all information
+into hidden states, which limits their ability to retrieve specific facts.
+
+End-to-End Memory Networks introduce an explicit memory component
+that can be queried through attention.
+
+\paragraph{Architecture.}
+
+The model consists of three main components:
+
+\begin{itemize}
+		\item An input representation
+		\item A memory module
+		\item An output module
+\end{itemize}
+
+The memory stores a set of vectors representing facts or observations:
+
+\[
+		m_i \in \mathbb{R}^d
+\]
+
+A query vector $u$ represents the current question.
+
+\paragraph{Memory Attention.}
+
+The model computes attention weights over memory entries:
+
+\[
+		p_i = \text{Softmax}(u^\top m_i)
+\]
+
+These weights determine which facts are relevant.
+
+A response vector is computed as
+
+\[
+		o = \sum_i p_i c_i
+\]
+
+where $c_i$ are output embeddings associated with each memory entry.
+
+\paragraph{Multi-Hop Reasoning.}
+
+The model can perform multiple reasoning steps (``hops'').
+
+After each hop, the query is updated:
+
+\[
+		u_{k+1} = u_k + o_k
+\]
+
+This allows the model to iteratively refine its reasoning and combine
+information from multiple memory entries.
+
+\paragraph{Prediction.}
+
+The final prediction is produced via
+
+\[
+		\hat{a} = \text{Softmax}(W(u_K + o_K))
+\]
+
+where $K$ is the number of hops.
+
+\paragraph{Applications.}
+
+The model was evaluated on the bAbI dataset, which contains
+synthetic reasoning tasks such as:
+
+\begin{itemize}
+		\item question answering
+		\item path finding
+		\item logical deduction
+\end{itemize}
+
+Multi-hop memory access allows the model to combine several supporting facts.
+
+\paragraph{Advantages.}
+
+Compared to earlier memory networks, this architecture:
+
+\begin{itemize}
+		\item is fully differentiable
+		\item can be trained end-to-end with gradient descent
+		\item does not require supervision of memory retrieval steps
+\end{itemize}
+
+\paragraph{Limitations.}
+
+Several challenges remain:
+
+\begin{itemize}
+		\item Memory size must remain relatively small
+		\item Attention mechanisms scale poorly with large knowledge bases
+		\item Performance degrades on more complex reasoning tasks
+\end{itemize}
+
+These limitations motivated later architectures such as
+transformers and retrieval-augmented models.
+
+\paragraph{Takeaway.}
+
+End-to-End Memory Networks introduced differentiable attention over
+explicit memory, enabling neural networks to retrieve and combine
+facts dynamically. This work strongly influenced later attention-based
+architectures and can be viewed as an early precursor to modern
+transformer models.
+
+\end{document}
