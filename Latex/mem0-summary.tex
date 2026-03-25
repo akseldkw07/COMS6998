@@ -1,0 +1,122 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{03/25/2026}
+\newcommand{\assignment}{Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+\section{Summary: Mem0 --- Building Production-Ready AI Agents with Scalable Long-Term Memory}
+
+\subsection{Motivation}
+Modern AI agents (e.g., LLM-based assistants) lack persistent, structured long-term memory. While they excel
+at short-context reasoning, they struggle to:
+\begin{itemize}
+		\item Retain user preferences over time
+		\item Accumulate knowledge across sessions
+		\item Scale memory without degrading performance
+\end{itemize}
+Mem0 addresses this gap by proposing a \textbf{production-ready memory system} for AI agents that is
+scalable, structured, and retrieval-efficient.
+
+\subsection{Core Idea}
+Mem0 introduces a modular long-term memory system that:
+\begin{itemize}
+		\item Stores information as \textbf{discrete memory units}
+		\item Continuously \textbf{extracts, updates, and consolidates} memories
+		\item Uses \textbf{retrieval mechanisms} to inject relevant memory into prompts
+\end{itemize}
+
+The key principle is separating:
+\begin{itemize}
+		\item \textbf{Working memory} (LLM context window)
+		\item \textbf{Long-term memory} (external persistent store)
+\end{itemize}
+
+\subsection{Memory Lifecycle}
+Mem0 formalizes memory as a pipeline with three stages:
+
+\paragraph{1. Extraction}
+Relevant information is extracted from interactions using an LLM. This includes:
+\begin{itemize}
+		\item User preferences
+		\item Facts
+		\item Behavioral patterns
+\end{itemize}
+
+\paragraph{2. Storage}
+Memories are stored in structured form, typically as:
+\begin{itemize}
+		\item Key-value pairs
+		\item Embeddings for semantic retrieval
+		\item Metadata (timestamps, importance, etc.)
+\end{itemize}
+
+\paragraph{3. Retrieval}
+At inference time, relevant memories are retrieved via:
+\begin{itemize}
+		\item Semantic search (vector similarity)
+		\item Filtering based on context or recency
+\end{itemize}
+These are then injected into the LLM prompt.
+
+\subsection{Memory Operations}
+Mem0 emphasizes that memory is \textbf{dynamic}, supporting:
+\begin{itemize}
+		\item \textbf{Add}: store new information
+		\item \textbf{Update}: refine or overwrite existing memories
+		\item \textbf{Delete}: remove stale or incorrect memories
+\end{itemize}
+
+This avoids unbounded growth and maintains memory quality.
+
+\subsection{Scalability Challenges}
+The paper highlights several challenges in scaling memory:
+\begin{itemize}
+		\item \textbf{Memory explosion}: naive accumulation leads to inefficiency
+		\item \textbf{Retrieval noise}: irrelevant memories degrade performance
+		\item \textbf{Latency}: large memory stores slow down inference
+\end{itemize}
+
+Mem0 mitigates these via:
+\begin{itemize}
+		\item Memory filtering and ranking
+		\item Periodic consolidation
+		\item Efficient vector databases
+\end{itemize}
+
+\subsection{System Design}
+Mem0 is designed as a \textbf{production system}, not just a research prototype:
+\begin{itemize}
+		\item Modular architecture (plug-and-play memory backend)
+		\item Compatible with existing LLM pipelines
+		\item Supports real-time updates
+\end{itemize}
+
+\subsection{Key Contributions}
+\begin{itemize}
+		\item A practical framework for long-term memory in AI agents
+		\item A full memory lifecycle (extract, store, retrieve, update)
+		\item Emphasis on scalability and production constraints
+		\item Demonstration of improved personalization and task performance
+\end{itemize}
+
+\subsection{Takeaways}
+Mem0 shows that:
+\begin{itemize}
+		\item Long-term memory is essential for production-grade AI agents
+		\item Memory must be \textbf{structured, selective, and dynamic}
+		\item Retrieval quality is as important as model capability
+\end{itemize}
+
+Overall, the paper bridges the gap between LLM capabilities and real-world agent requirements by treating
+memory as a first-class system component.
+\end{document}

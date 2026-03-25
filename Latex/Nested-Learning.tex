@@ -1,0 +1,111 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{01/28/2026}
+\newcommand{\assignment}{Continual Learning Overview: Summary}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{Nested Learning}
+
+\paragraph{Motivation.}
+Modern machine learning systems combine neural architectures and optimization algorithms
+in complex ways. Despite advances in deep learning, there remains limited understanding
+of how learning algorithms, architectures, and memory mechanisms interact.
+
+The Nested Learning (NL) paradigm proposes a unifying framework that models learning
+systems as hierarchies of interconnected optimization processes.
+
+\paragraph{Core Idea.}
+Nested Learning represents a machine learning model as a collection of
+\textbf{nested optimization problems}, each operating at a different level
+of abstraction. \cite{nestedlearning}
+
+In this view:
+
+\begin{itemize}
+		\item Neural architectures operate on \textbf{data context} (tokens, images, etc.).
+		\item Optimizers operate on \textbf{gradient context}.
+\end{itemize}
+
+Both processes can be interpreted as learning systems that compress their respective contexts.
+
+This perspective suggests that optimization algorithms and neural architectures
+are fundamentally the same type of object operating at different levels.
+
+\paragraph{Associative Memory Interpretation.}
+Nested Learning interprets many machine learning components as forms of associative memory.
+
+For example:
+
+\begin{itemize}
+		\item Neural networks compress training data into parameters.
+		\item Optimizers compress gradient information into momentum or adaptive statistics.
+\end{itemize}
+
+Under this interpretation, common optimizers such as Adam or SGD with momentum
+are themselves associative memory systems that learn to store gradient information.
+
+\paragraph{Multi-Level Learning Systems.}
+The NL framework introduces multiple interacting learning levels:
+
+\begin{enumerate}
+		\item Data-level learning (standard neural network training)
+		\item Optimizer-level learning (learning how to update parameters)
+		\item Meta-learning levels that adapt the learning algorithm itself
+\end{enumerate}
+
+Each level maintains its own internal gradient flow and update rule.
+
+\paragraph{Self-Modifying Models.}
+Building on this framework, the paper proposes architectures that can modify
+their own learning rules. These models learn update rules that control how
+their internal memory and parameters evolve over time.
+
+This enables forms of continual learning and adaptive reasoning.
+
+\paragraph{Continuum Memory System.}
+The paper also introduces a \emph{continuum memory system} in which memory
+exists along a spectrum of update frequencies rather than being divided into
+discrete short-term and long-term components.
+
+Different memory modules update at different temporal scales, enabling
+both rapid adaptation and persistent knowledge storage.
+
+\paragraph{Hope Architecture.}
+As a proof of concept, the authors introduce a continual learning model
+called \emph{Hope}, which integrates:
+
+\begin{itemize}
+		\item nested optimization mechanisms
+		\item adaptive memory modules
+		\item self-modifying learning rules
+\end{itemize}
+
+Experiments demonstrate promising results on language modeling,
+continual learning benchmarks, and few-shot generalization tasks.
+
+\paragraph{Limitations.}
+The Nested Learning framework is primarily conceptual and theoretical.
+Many proposed mechanisms remain difficult to implement efficiently
+in large-scale models.
+
+Additionally, the framework introduces substantial architectural
+complexity and raises challenges for stable training.
+
+\paragraph{Takeaway.}
+Nested Learning proposes a new perspective on deep learning in which
+architectures, optimizers, and memory systems are viewed as nested
+learning processes. This unified framework may provide insights for
+designing more adaptive and continual learning systems.
+
+\end{document}
