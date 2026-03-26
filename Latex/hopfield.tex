@@ -1,0 +1,136 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{03/25/2026}
+\newcommand{\assignment}{Hopfield Networks is All You Need}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+\section{Hopfield Networks is All You Need (Ramsauer et al., 2020)}
+
+\subsection{Motivation}
+
+Classical Hopfield networks are associative memory models that store patterns and retrieve them via energy
+minimization. However, traditional formulations suffer from:
+\begin{itemize}
+		\item Limited storage capacity
+		\item Shallow energy landscapes
+		\item Difficulty scaling to modern machine learning settings
+\end{itemize}
+
+This paper revisits Hopfield networks and shows that a modernized formulation can scale to high-dimensional
+settings and is closely related to attention mechanisms.
+
+\subsection{Key Idea}
+
+The paper introduces \textbf{modern Hopfield networks} with continuous states and an updated energy function.
+The central insight is:
+
+\begin{quote}
+		Modern Hopfield updates are mathematically equivalent to attention mechanisms.
+\end{quote}
+
+This connects associative memory with transformer architectures.
+
+\subsection{Model Formulation}
+
+Given stored patterns $\{x_i\}_{i=1}^N$, the network defines an energy function:
+
+\[
+		E(\xi) = -\frac{1}{\beta} \log \left( \sum_{i=1}^N \exp(\beta x_i^T \xi) \right)
+\]
+
+The update rule becomes:
+
+\[
+		\xi \leftarrow \sum_{i=1}^N \text{softmax}(\beta x_i^T \xi) \; x_i
+\]
+
+This is equivalent to a weighted sum of stored patterns using a softmax over similarities.
+
+\subsection{Connection to Attention}
+
+This update rule is identical to attention:
+
+\[
+		\text{Attention}(q, K, V) = \text{softmax}(q K^T) V
+\]
+
+Mapping:
+\begin{itemize}
+		\item Query $q \leftrightarrow \xi$
+		\item Keys $K \leftrightarrow x_i$
+		\item Values $V \leftrightarrow x_i$
+\end{itemize}
+
+Thus, attention can be interpreted as a retrieval step in a Hopfield network.
+
+\subsection{Memory Properties}
+
+Modern Hopfield networks have dramatically improved capacity:
+
+\begin{itemize}
+		\item Exponential storage capacity in dimension
+		\item Ability to store continuous patterns
+		\item Fast convergence (often one update step)
+\end{itemize}
+
+They can retrieve:
+\begin{itemize}
+		\item Exact stored patterns
+		\item Averaged patterns
+		\item Global prototypes
+\end{itemize}
+
+\subsection{Energy Landscape}
+
+The energy function induces different types of fixed points:
+
+\begin{itemize}
+		\item Individual memories (sharp minima)
+		\item Metastable states (clusters)
+		\item Global averages (broad minima)
+\end{itemize}
+
+This explains why attention can interpolate between patterns.
+
+\subsection{Applications}
+
+The paper demonstrates that modern Hopfield layers can be used in:
+
+\begin{itemize}
+		\item Multiple instance learning
+		\item Set-based learning tasks
+		\item Deep neural networks as a drop-in module
+\end{itemize}
+
+They provide a principled interpretation of attention as memory retrieval.
+
+\subsection{Key Contributions}
+
+\begin{itemize}
+		\item Reformulation of Hopfield networks with continuous states
+		\item Proof of equivalence between Hopfield updates and attention
+		\item Exponential increase in storage capacity
+		\item Integration of associative memory into deep learning
+\end{itemize}
+
+\subsection{Takeaway}
+
+The paper shows that:
+
+\[
+		\text{Attention} \approx \text{Modern Hopfield Retrieval}
+\]
+
+This unifies classical associative memory with modern transformer architectures and provides a theoretical
+foundation for attention mechanisms.
+\end{document}

@@ -1,0 +1,111 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{01/28/2026}
+\newcommand{\assignment}{Continual Learning Overview: Summary}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{Titans: Learning to Memorize at Test Time}
+
+\paragraph{Motivation.}
+Transformers achieve strong performance due to attention-based context retrieval, but they are fundamentally limited by
+their finite context window and quadratic complexity with respect to sequence length. As a result, they struggle with
+very long contexts and cannot persistently store information beyond the active attention window.
+
+The Titans architecture introduces a neural long-term memory module that allows models to \emph{learn to memorize at
+test time}. The goal is to combine the strengths of attention (accurate short-term dependency modeling) with
+a persistent
+memory mechanism that can store information over extremely long time horizons.
+
+\paragraph{Core Idea.}
+The paper views sequence models through a memory lens:
+
+\begin{itemize}
+		\item Attention acts as \textbf{short-term memory}.
+		\item Recurrent memory modules act as \textbf{long-term memory}.
+\end{itemize}
+
+Titans integrate both components into a unified architecture where attention handles the local context and a separate
+memory module accumulates information over long time spans. This allows the model to scale to contexts far beyond
+traditional Transformer limits. \cite{titans}
+
+\paragraph{Neural Long-Term Memory.}
+The key contribution is a neural memory module that stores information dynamically during inference.
+Unlike standard neural networks whose parameters remain fixed during test time, the memory module
+updates itself using the incoming data stream.
+
+The system measures the \emph{surprise} of an input token using gradients of an associative memory objective.
+Tokens that violate model expectations are considered more informative and are preferentially stored
+in memory.
+
+Memory updates resemble gradient-based learning rules:
+
+\[
+		M_t = M_{t-1} - \eta \nabla L(M_{t-1}; x_t)
+\]
+
+where $M_t$ is the memory state and $L$ is a memory objective that captures key–value associations.
+
+\paragraph{Memory Management.}
+To prevent uncontrolled memory growth, the architecture introduces a decay mechanism similar to weight
+decay in optimization. This mechanism balances:
+
+\begin{itemize}
+		\item the amount of stored information
+		\item the surprise level of incoming data
+		\item the total memory capacity
+\end{itemize}
+
+This effectively implements a learned forgetting mechanism.
+
+\paragraph{Titan Architecture.}
+The full model consists of three interacting components:
+
+\begin{itemize}
+		\item \textbf{Core module:} a short-context attention mechanism that processes the current sequence window.
+		\item \textbf{Long-term memory module:} a neural memory that accumulates information over long horizons.
+		\item \textbf{Persistent memory:} task-specific parameters representing global knowledge about the domain.
+\end{itemize}
+
+The paper introduces three variants that integrate the memory module in different ways:
+as an additional context source, as a network layer, or as a gated branch.
+
+\paragraph{Results.}
+Experiments show that Titans:
+
+\begin{itemize}
+		\item outperform modern recurrent sequence models
+		\item match or exceed Transformers with equivalent context windows
+		\item scale to contexts exceeding two million tokens
+\end{itemize}
+
+Performance improvements are observed in language modeling, commonsense reasoning,
+time-series forecasting, genomics tasks, and long-context retrieval benchmarks. \cite{titans}
+
+\paragraph{Limitations.}
+Despite promising results, several limitations remain:
+
+\begin{itemize}
+		\item The architecture introduces additional complexity compared to standard Transformers.
+		\item Memory updates may introduce instability during long sequences.
+		\item The memory module relies on heuristic design choices such as surprise-based storage.
+\end{itemize}
+
+Further work is required to evaluate scaling behavior in large language models.
+
+\paragraph{Takeaway.}
+Titans propose a new hybrid architecture combining attention-based short-term reasoning with
+a learnable long-term memory that updates during inference. This approach aims to bridge the gap
+between Transformers' powerful local modeling and the persistent memory capabilities of recurrent systems.
+
+\end{document}
