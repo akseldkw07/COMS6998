@@ -1,0 +1,130 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{04/01/2026}
+\newcommand{\assignment}{Learn-to-Learn without Forgetting: Summary}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{Learning to Learn without Forgetting by Maximizing Transfer and Minimizing Interference}
+
+\paragraph{Motivation.}
+Continual learning over non-stationary distributions remains a major challenge
+for neural networks. Prior work has framed the problem primarily through the
+lens of catastrophic forgetting (interference) or the stability-plasticity
+dilemma. However, these views consider only backward-in-time effects: how
+current learning degrades past knowledge.
+
+This paper argues that a complete picture must be \emph{temporally symmetric},
+accounting for both backward interference and forward transfer simultaneously.
+
+\paragraph{The Transfer-Interference Trade-off.}
+The authors define operational measures of transfer and interference between
+two examples $(x_i, y_i)$ and $(x_j, y_j)$ via gradient alignment:
+
+\begin{itemize}
+		\item \textbf{Transfer} occurs when
+				$\frac{\partial L(x_i, y_i)}{\partial \theta} \cdot
+				\frac{\partial L(x_j, y_j)}{\partial \theta} > 0$,
+				meaning learning one example improves the other.
+		\item \textbf{Interference} occurs when this dot product is negative,
+				meaning learning one example harms the other.
+\end{itemize}
+
+Weight sharing between examples creates both transfer and interference potential.
+The key insight is that we must consider this trade-off in both the forward and
+backward temporal directions, not just backward as in the classical
+stability-plasticity framing.
+
+\paragraph{Ideal Objective.}
+To maximize transfer and minimize interference, the paper proposes the following
+idealized objective:
+\[
+		\theta = \arg\min_{\theta} \;
+		\mathbb{E}_{[(x_i, y_i),(x_j, y_j)] \sim D}
+		\Bigl[ L(x_i, y_i) + L(x_j, y_j)
+    - \alpha \frac{\partial L(x_i, y_i)}{\partial \theta} \cdot
+		\frac{\partial L(x_j, y_j)}{\partial \theta} \Bigr].
+\]
+
+The gradient dot-product regularizer directly encourages the network to share
+parameters where gradient directions align and keep them separate where
+gradients conflict.
+
+\paragraph{Meta-Experience Replay (MER).}
+Computing second derivatives of the ideal objective is expensive, so the authors
+approximate it using first-order meta-learning (Reptile) combined with experience
+replay. The resulting algorithm, \textbf{Meta-Experience Replay (MER)}, works
+as follows:
+
+\begin{enumerate}
+		\item Maintain an experience replay buffer $M$ updated via reservoir sampling.
+		\item At each time step, draw $s$ batches of $k{-}1$ replay samples, each
+				interleaved with the current example.
+		\item Process each batch with inner SGD steps, applying a within-batch
+				Reptile meta-update after each batch.
+		\item Apply an across-batch Reptile meta-update to the main parameters.
+		\item Add the current example to the replay buffer.
+\end{enumerate}
+
+This procedure approximately optimizes the transfer-interference objective with
+minimal computational overhead beyond standard experience replay.
+
+\paragraph{Key Design Choices.}
+Several properties make MER effective:
+
+\begin{itemize}
+		\item \textbf{Reservoir sampling} ensures the buffer approximates the
+				stationary distribution over all examples seen so far.
+		\item \textbf{Prioritizing the current example} by interleaving it with
+				every replay batch ensures the model can learn the present while
+				consolidating past knowledge.
+		\item \textbf{SGD batch size of 1} provides fine-grained second derivative
+				information at the example level.
+\end{itemize}
+
+\paragraph{Experimental Results.}
+MER is evaluated on supervised continual learning benchmarks and reinforcement
+learning settings:
+
+\begin{itemize}
+		\item \textbf{MNIST Rotations/Permutations (20 tasks):} MER outperforms
+				GEM, EWC, and online baselines in retained accuracy, showing superior
+				balance between transfer and interference.
+		\item \textbf{Many Permutations \& Omniglot:} In more non-stationary
+				settings (100 tasks, 50 alphabets), MER's advantage over baselines
+				grows substantially, nearly quadrupling baseline performance on Omniglot.
+		\item \textbf{Buffer sensitivity:} MER's benefits increase as the buffer
+				shrinks, providing $>$10\% gains over GEM at the smallest buffer sizes.
+		\item \textbf{Continual RL (Catcher, Flappy Bird):} DQN-MER retains
+				knowledge across task switches while standard DQN forgets
+				catastrophically.
+\end{itemize}
+
+Gradient dot-product analysis confirms that MER produces significantly more
+positive gradient alignment than standard experience replay.
+
+\paragraph{Limitations.}
+MER requires maintaining an experience replay buffer, which may be infeasible
+at very large scales. The Reptile-based meta-learning adds computational
+overhead proportional to the number of replay batches. The theoretical
+analysis relies on first-order approximations of the ideal objective.
+
+\paragraph{Takeaway.}
+This paper reframes continual learning as solving the transfer-interference
+trade-off in a temporally symmetric manner. MER provides a practical,
+computationally efficient algorithm that combines experience replay with
+meta-learning to promote gradient alignment, consistently outperforming
+prior continual learning methods across supervised and reinforcement
+learning settings.
+
+\end{document}
