@@ -1,0 +1,116 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{04/01/2026}
+\newcommand{\assignment}{Online Meta-Learning: Summary}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{Online Meta-Learning}
+
+\paragraph{Motivation.}
+Two distinct research paradigms address how agents can leverage past experience
+to improve future learning. Meta-learning studies how to learn a prior over model
+parameters for fast adaptation, but assumes tasks are available as a batch.
+Online (regret-based) learning handles sequential, non-stationary task streams,
+but trains a single model without task-specific adaptation.
+
+Neither setting alone captures continual lifelong learning: meta-learning neglects
+sequentiality, and online learning does not consider how past experience can
+accelerate adaptation to new tasks.
+
+\paragraph{Core Idea.}
+The paper introduces the \textbf{online meta-learning} problem setting, which
+merges ideas from both paradigms. An agent faces tasks one after another in a
+sequential fashion and must simultaneously:
+
+\begin{itemize}
+		\item Use past experience to learn good priors (meta-learning).
+		\item Adapt quickly to the current task at hand (online learning).
+\end{itemize}
+
+At each round $t$, the agent maintains parameters $\mathbf{w}_t$, the world
+reveals a task defined by loss $f_t$, and the agent applies a local update
+procedure $U_t$ (e.g., a gradient descent step) before being evaluated.
+
+\paragraph{Follow the Meta Leader (FTML).}
+The proposed algorithm extends MAML to the online setting by applying the
+Follow the Leader (FTL) principle at the meta-level. FTML selects parameters
+at each round by solving:
+\[
+		\mathbf{w}_{t+1} = \arg\min_{\mathbf{w}} \sum_{k=1}^{t} f_k\bigl(U_k(\mathbf{w})\bigr).
+\]
+
+This can be interpreted as playing the best meta-learner in hindsight up to
+round $t$. The comparator class is powerful: it allows task-specific adaptation
+via $U_t$, so achieving sublinear regret means the algorithm is competitive with
+the best MAML-style initialization in hindsight.
+
+\paragraph{Theoretical Guarantees.}
+Under standard smoothness assumptions plus one additional condition on Lipschitz
+Hessians ($C^2$-smoothness), the authors prove:
+
+\begin{enumerate}
+		\item The MAML-like objective inherits convexity from the original loss
+				when the step size $\alpha$ is sufficiently small (Theorem 1).
+		\item FTML achieves $O\!\left(\frac{G^2}{\mu}\log T\right)$ regret against
+				the best meta-learner in hindsight (Corollary 2), providing the first
+				provable and efficient guarantees for MAML-like objectives.
+\end{enumerate}
+
+\paragraph{Practical Algorithm.}
+For deep networks with non-convex losses, the paper adapts FTML using stochastic
+optimization. At each round, the algorithm maintains a task buffer $B$ and
+computes meta-gradients by sampling past tasks and using independently drawn
+minibatches for the inner update ($\mathcal{D}^{\text{tr}}_k$) and outer
+optimization ($\mathcal{D}^{\text{val}}_k$) to reduce bias.
+
+The gradient computation follows:
+\[
+		\mathbf{g}_t = \nabla_{\mathbf{w}} \, \mathbb{E}_{k \sim \nu^t}
+		\mathcal{L}\bigl(\mathcal{D}_k^{\text{val}}, U_k(\mathbf{w})\bigr),
+		\quad \text{where} \quad
+		U_k(\mathbf{w}) \equiv \mathbf{w} - \alpha \, \nabla_{\mathbf{w}}
+		\mathcal{L}(\mathcal{D}_k^{\text{tr}}, \mathbf{w}).
+\]
+
+\paragraph{Experimental Results.}
+FTML is evaluated on three vision-based sequential learning problems:
+
+\begin{itemize}
+		\item \textbf{Rainbow MNIST:} 56 tasks with varying backgrounds, scales,
+				and rotations. FTML learns new tasks faster over time and outperforms
+				all baselines in both efficiency and final performance.
+		\item \textbf{Five-Way CIFAR-100:} A sequence of 5-way classification tasks.
+				FTML learns each task more efficiently than training from scratch and
+				benefits from adapting all layers rather than only the last layer.
+		\item \textbf{PASCAL 3D+ Pose Prediction:} 90 pose regression tasks. FTML
+				solves many tasks with only 10 datapoints, demonstrating strong
+				forward transfer.
+\end{itemize}
+
+Across all experiments, FTML substantially outperforms baselines including
+Train on Everything (TOE), training from scratch, and FTL with fine-tuning.
+
+\paragraph{Limitations.}
+FTML inherits the computational cost of FTL, which grows as loss functions
+accumulate. Storing all datapoints from prior tasks may also be impractical
+at scale. The theoretical analysis is restricted to convex losses with
+$C^2$-smoothness, leaving non-convex guarantees as future work.
+
+\paragraph{Takeaway.}
+Online Meta-Learning bridges meta-learning and online learning into a unified
+framework for continual lifelong learning. The FTML algorithm demonstrates that
+meta-learning sequentially---becoming more proficient at learning new tasks over
+time---is both theoretically grounded and empirically effective.
+
+\end{document}
