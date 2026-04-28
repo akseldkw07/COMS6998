@@ -1,0 +1,118 @@
+\documentclass[12pt]{article}
+\usepackage[margin=0.75in]{geometry}
+
+\newcommand{\duedate}{04/05/2026}
+\newcommand{\assignment}{When Do Curricula Work: Summary}
+
+\newcommand{\name}{Aksel Kretsinger-Walters, adk2164}
+\newcommand{\email}{adk2164@columbia.edu}
+
+\makeatletter
+\def\input@path{{../}{../../}{../../../}}
+\makeatother
+\input{pset_template_CLMM.tex} %% DO NOT CHANGE THIS LINE
+
+\begin{document}
+\psetheader %% DO NOT CHANGE THIS LINE
+
+\section*{When Do Curricula Work?}
+
+\paragraph{Motivation.}
+Curriculum learning --- presenting training examples in a meaningful order,
+typically easy-to-hard --- has been proposed as a way to improve convergence
+and generalization. Anti-curriculum learning (hard-to-easy) has also shown
+benefits in some settings. Despite a rich literature, empirical results
+conflict: curricula help in some experiments but not others, and no ordered
+learning method consistently improves across contexts. This paper aims to
+systematically determine when and why curricula are beneficial.
+
+\paragraph{Implicit Curricula.}
+Before studying explicit orderings, the authors investigate whether neural
+networks already learn examples in a consistent order under standard i.i.d.\
+training. They define the \emph{learned iteration} of a sample as the epoch
+at which the model first correctly and permanently classifies it.
+
+Across 142 configurations (architectures $\times$ optimizers) on CIFAR-10,
+the learned iteration ordering is highly consistent within architecture
+families. The Spearman correlation between orderings from different CNNs
+is very high, indicating that a robust, architecture-dependent notion of
+example difficulty exists. This \emph{implicit curriculum} emerges from the
+interaction of architecture and optimization, not from explicit data ordering.
+
+\paragraph{Curriculum Framework.}
+The paper formalizes curricula via three components:
+
+\begin{enumerate}
+		\item \textbf{Scoring function} $s(\mathbf{x}) \in \mathbb{R}$: assigns
+				a difficulty score to each example. Three are studied: loss of a
+				reference model, learned iteration, and c-score (consistency of
+				correct predictions across independent training runs).
+		\item \textbf{Pacing function} $g(t)$: determines how many examples are
+				available at training step $t$, controlling how quickly the full
+				dataset is introduced. Six families are considered: logarithmic,
+				exponential, step, linear, quadratic, and root.
+		\item \textbf{Order}: curriculum (easy-to-hard), anti-curriculum
+				(hard-to-easy), or random ordering within the paced subset.
+\end{enumerate}
+
+All three scoring functions are highly correlated, so c-score is used
+throughout.
+
+\paragraph{Main Finding: Curricula Provide Marginal Benefit in Standard Settings.}
+Across a massive sweep of over 25{,}000 models on CIFAR-10, CIFAR-100,
+FOOD101, and FOOD101N, the paper finds:
+
+\begin{itemize}
+		\item Under standard training (full budget, clean data), \textbf{no ordering
+						--- curriculum, anti-curriculum, or random --- provides statistically
+				significant improvement} over standard i.i.d.\ SGD.
+		\item Any marginal gains from pacing functions are explained entirely by the
+				\emph{dynamic dataset size} effect (starting with a smaller dataset
+				and growing it), not by the ordering itself. Random-curriculum performs
+				as well as curriculum.
+\end{itemize}
+
+\paragraph{When Curricula Do Help.}
+Curricula become genuinely beneficial in two specific regimes:
+
+\begin{itemize}
+		\item \textbf{Limited training time:} When the compute budget is
+				drastically reduced (e.g., 352 steps instead of 17{,}600),
+				curriculum ordering provides a clear advantage over anti-curriculum
+				and standard training. At the tightest budgets, even random-curriculum
+				(random order with a pacing function) outperforms the baseline,
+				suggesting the dynamic dataset size itself helps.
+		\item \textbf{Noisy labels:} With 20--80\% label noise on CIFAR-100,
+				curriculum learning significantly outperforms all other methods.
+				The easy-to-hard ordering allows the model to first learn clean
+				patterns before encountering corrupted examples. The best pacing
+				functions under noise correspond to simply ignoring all noisy data
+				during training.
+\end{itemize}
+
+These findings generalize to larger-scale datasets (FOOD101, FOOD101N).
+
+\paragraph{Why These Regimes.}
+Both limited time and label noise shift the c-score distribution toward
+harder examples, making the distinction between easy and hard examples more
+consequential. In standard settings with sufficient compute and clean data,
+SGD eventually learns all examples regardless of order, so curricula add
+nothing. When resources are constrained or data is corrupted, prioritizing
+reliable examples first becomes valuable.
+
+\paragraph{Limitations.}
+The study is limited to image classification with fixed datasets (CIFAR,
+FOOD101) and does not cover language modeling, where curricula are standard
+practice in large-scale pretraining (GPT-3, T5). The scoring functions are
+computed before training begins, so self-paced or online difficulty
+estimation is not considered. The paper also notes that conclusions about
+curricula may not transfer to very different task types or training regimes.
+
+\paragraph{Takeaway.}
+Curricula are not a general-purpose improvement to training. Their benefit
+is concentrated in settings where learning resources are scarce (limited
+compute or corrupted data), making example prioritization valuable. In
+standard well-resourced training, the order of examples is largely
+irrelevant --- i.i.d.\ sampling works just as well.
+
+\end{document}
