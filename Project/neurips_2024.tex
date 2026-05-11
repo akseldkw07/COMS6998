@@ -112,21 +112,74 @@ models range in size from 2B to 32B parameters, allowing benchmarkers with great
 
 \subsection{DualPrompt Implementation: MARIA}
 
-\subsection{New Datasets: AKSEL}
+\subsection{New Datasets}
 Due to the variety of datasets, GPUs, and contributors, a standard contribution and benchmarking pipeline had
-to be formed and agreed to. The per-dataset deliverable consisted of
+to be formed and agreed to. The per-dataset deliverable consists of
 
 \begin{enumerate}
 		\item A function to download and save the raw data
 		\item A pre-processing function to convert the data into desired form (i.e. raw tensor -> image)
-		\item A loader function to download the processed dataset from a predetermined location on disk
+		\item A loader function to load the processed dataset from a predetermined location on disk to memory
 		\item A configuration dictionary with context, prompting, and post-processing to ensure the LLM's answer
 				format matched the dataset's provided answer format
 		\item Documentation on the performance of the benchmark LLM out-of-the-box, after 1 epoch of LoRA
 				finetuning, and after 5 epochs of finetuning
+		\item A hook to couple the configuration dictionary to the loader function
+		\item A psuedo-deterministic train/eval/test split in the loader, if none is specified by the dataset authors
 \end{enumerate}
 
-\subsection{Benchmarking Protocol and Evaluation Metrics: AKSEL}
+Following this protocol, we added eight datasets to the benchmark. Three carry native train splits and
+participate in the continual learning loop; the remaining five are loaded eval-only and are drawn from
+the Qwen3-VL Technical Report Table 4 \cite{qwen3vl} so that base-model scores can be cross-referenced
+against published numbers.
+
+The datasets we added are the following:
+
+\begin{itemize}
+		\item \textbf{ChartQA} (Masry et al. 2022) -- Visual QA over charts and plots, pre-split into
+				\texttt{train / val / test}. The Hub version stores \texttt{label} as a plain string and
+				\texttt{image} as \texttt{Value('binary')} bytes; preprocessing casts the image column to
+				\texttt{datasets.Image()} and copies \texttt{label} directly to \texttt{answer}.
+		\item \textbf{ScienceQA} (Lu et al. 2022) -- Multiple-choice science QA with accompanying images.
+				Text-only examples are filtered out and the integer \texttt{answer} index is resolved to the
+				corresponding choice string.
+		\item \textbf{VCR (A-OKVQA stand-in)} -- The original VCR dataset (Zellers et al. 2019) requires
+				a signed license and is not redistributable on the Hub. We substitute A-OKVQA (Schwenk et al.
+				2022), which has the same multiple-choice structure; the correct choice index is resolved to
+				an \texttt{answer} string. The test split has \texttt{correct\_choice\_idx=None}, so
+				\texttt{answer} is empty for test rows.
+		\item \textbf{MMMU-Pro} (Yue et al. 2024b) -- Multi-discipline, expert-level multiple-choice VQA
+				covering subjects from art history to circuit analysis. We load the \texttt{standard
+				(4 options)} configuration and restrict to single-image rows (the dataset can reference up
+				to seven images per question). The stringified \texttt{options} list is parsed and the
+				letter answer is resolved to its option text.
+		\item \textbf{LogicVista} (Xiao et al. 2024) -- Visual logical-reasoning multiple-choice. The
+				options are embedded in the question text and the reference answer is a single letter, so
+				the model is prompted to emit only \texttt{A/B/C/...} and scoring is exact-match on the
+				letter.
+		\item \textbf{RoboSpatial-Home} (Song et al. 2025a) -- Spatial-understanding QA over indoor
+				scenes, split into three task types: \texttt{context} (point at a region), \texttt{compatibility}
+				(yes/no), and \texttt{configuration} (short phrase). Pointing answers are scored against a
+				per-row binary mask, and the Qwen3-VL JSON suffix is baked into context-row questions at
+				preprocess time so the runner stays task-agnostic.
+		\item \textbf{ERQA} (Team et al. 2025) -- Embodied-reasoning short-answer VQA, the benchmark
+				used in the Gemini Robotics paper. We load FlagEval's parquet mirror (the original ships as
+				TFRecords) and restrict to single-image rows.
+		\item \textbf{HallusionBench} (Guan et al. 2023) -- Yes/no diagnostic probes for visual
+				hallucination across charts, OCR, maps, and figures. We use the \texttt{image} split (951
+				rows); native \texttt{1}/\texttt{0} labels are mapped to \texttt{yes}/\texttt{no} so that
+				exact-match against natural-language model replies works.
+\end{itemize}
+
+\subsection{Benchmarking Protocol and Evaluation Metrics}
+An important part of the dataset delivery pipeline is the benchmarking step. The benefits include data format
+debugging, validation of the Qwen3 published benchmark score, a mental heuristic for the dataset questions,
+and a comparison point for the CL algorithm vs a simple LoRA SFT approach.
+
+The first step is drafting an eval config that results in optimal baseline performance. For example, most
+benchmarks expect a single-token response. In the absence of additional instruction, the LLM tends to produce
+a verbose answer, which fails the regex match every time. Providing clear instruction denoises the training
+signal in backprop, improving performance and interpretability.
 
 \subsection{Changes to Processing Existing Datasets: Maria}
 
