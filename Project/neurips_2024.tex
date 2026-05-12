@@ -22,6 +22,8 @@
 
 \begin{document}
 
+\newgeometry{margin=0.75in}
+
 \author{%
   Aksel Kretsinger-Walters \\
   \texttt{adk2164@columbia.edu} \\
@@ -171,7 +173,7 @@ The datasets we added are the following:
 				exact-match against natural-language model replies works.
 \end{itemize}
 
-\subsection{Benchmarking Protocol and Evaluation Metrics}
+\subsection{Benchmarking Protocol and Evaluation Metrics}\label{sec:benchmarking}
 An important part of the dataset delivery pipeline is the benchmarking step. The benefits include data format
 debugging, validation of the Qwen3 published benchmark score, a mental heuristic for the dataset questions,
 and a comparison point for the CL algorithm vs a simple LoRA SFT approach.
@@ -196,11 +198,12 @@ model on the underperformance <--> saturation spectrum.
 
 The final step is to record the results in the \texttt{day\_in\_the\_life/datasets/README.md} table. In
 addition to the quantitative results included in the table, qualitative observations, shortcuts, compromises,
-caveats, etc. should be appended to the bottom section
+caveats, etc. should be appended to the bottom section.
 
 \begin{figure}[h]
 		\centering
 		\includegraphics[width=0.95\textwidth]{./aksel_img/benchmark-table-snippet.png}
+		\caption{A snippet of the dataset benchmarking table.}
 \end{figure}
 
 \subsection{Changes to Processing Existing Datasets: Maria}
@@ -210,7 +213,23 @@ caveats, etc. should be appended to the bottom section
 \subsection{Qwen-4b Performance Reproduction}
 
 Before testing any CL algorithms, it's necessary to ensure that the baseline performance of the
-Qwen3-VL-2B-Instruct model on the datasets matches the published numbers.
+Qwen3-VL-2B-Instruct model on the datasets matches the published numbers. We've outlined many of the hurdles
+and bugs overcome in this process in Section~\ref{sec:benchmarking}, but here we'll focus on some of the
+gray-area decisions and
+tradeoffs made.
+
+\paragraph*{Inference Settings} The Qwen3-VL Tech Report prescribes \texttt{temperature=1.0, top\_p=1.0,
+top\_k=40, presence\_penalty=2.0, max\_tokens=32768} for the small Instruct family (2B/4B/8B). The pre-fix
+default was greedy \texttt{temperature=0.0} with \texttt{max\_tokens=128}. The Instruct model is post-trained
+on long chain-of-thought data, so it expects to reason before answering — but a 128-token output budget cuts
+off the reasoning trace and forces the model to commit to an answer prematurely. The fix: a \texttt{cot=True}
+flag in the configuration dictionary that swaps in the paper-spec sampling, and an increased
+\texttt{max\_tokens} to allow the model to reason through the question.
+
+\paragraph*{Multiple Choice Questions} In some cases, chain of thought reasoning resulted in a paraphrasing
+and corruption of critical answer format instruction. The compromise solution reached was an eval flag
+\texttt{mcq\_letter\_format} that invoked a minimal postprocessing function to extract the answer and convert
+it to the correct format.
 
 \subsection{New Methods' Performance: CHIRSTIAN and MARIA}
 
