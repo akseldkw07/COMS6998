@@ -311,7 +311,8 @@ caveats, etc. should be appended to the bottom section.
 		\caption{A snippet of the dataset benchmarking table.}
 \end{figure}
 
-The full table of benchmarking results is included in the Appendix as Figure~\ref{fig:benchmark-results}.
+\hypertarget{ref:benchmark-results}{}The full table of benchmarking results is included in the Appendix as
+Figure~\ref{fig:benchmark-results}.
 
 \subsection{Changes to Processing Existing Datasets: Maria}
 
@@ -484,10 +485,14 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 
 \section*{Appendix}
 
+% NOTE: the caption below contains a reverse hyperlink back to the single
+% in-text reference at \hypertarget{ref:benchmark-results}{...} in §3.6. If a
+% second forward reference to fig:benchmark-results is ever added elsewhere,
+% add another hyperlink to the new reference and disambiguate the two with \hyperlink{ref:benchmark-results-2}{...}
 \begin{figure}[H]
 		\centering
 		\includegraphics[width=0.95\textwidth]{./aksel_img/benchmark-table-all.png}
-		\caption{The full benchmark result table.}
+		\caption{The full benchmark result table. (\protect\hyperlink{ref:benchmark-results}{back to reference})}
 		\label{fig:benchmark-results}
 \end{figure}
 
