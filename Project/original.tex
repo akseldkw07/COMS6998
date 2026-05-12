@@ -1,0 +1,221 @@
+\documentclass{article}
+
+\usepackage[final]{neurips_2024}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{algorithm}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+
+\raggedbottom
+
+\title{New Datasets and Methods for \texttt{day-in-the-life} Continual Learning Benchmark}
+
+\begin{document}
+
+\author{%
+  Aksel Kretsinger-Walters \\
+  \texttt{adk2164@columbia.edu} \\
+  \And
+  Christian Montgomery \\
+  \texttt{cm4521@columbia.edu} \\
+  \And
+  Maria Garmonina \\
+  \texttt{mkg2169@columbia.edu} \\
+}
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\section{Introduction and Motivation: MARIA}
+Continual learning explores how AI systems can adapt and continue training and learning at deployment time.
+This property is necessary for systems to adapt to real-world scenarios with data distribution shifts and
+constantly changing information. Models operating in continual learning scenarios inherently struggle with
+(catastrophic) forgetting, and while there are multiple approaches for lessening or mitigating this
+phenomenon \cite{cl-overview}, researchers in the area have not developed a comprehensive, real-world
+benchmark for continual learning tasks. Most papers we are familiar with in the field operate on MNIST or
+CIFAR datasets and are able to prove the effectiveness of the respective methods in this very particular
+setup. Our goal is to test continual learning methods on valuable and interesting tasks that resemble a day
+in a life of a human (hence the title): finding your way around in an environment, learning new skills,
+reasoning through hard questions, etc. This manuscript describes our contributions along three dimensions
+(infrastructure, datasets, and methods) to the larger \texttt{day-in-the-life} benchmark. Our main additions
+and findings are the following:
+\begin{itemize}
+		\item Sth about DER and similarity stuff
+		\item Sth about DualPrompt
+		\item Sth about new datasets and infrastructure for them
+\end{itemize}
+
+\section{Literature Review}
+Continual learning methods are usually classified into five main areas -- they can be based on
+regularization, replay (also called rehearsal), optimization, representation, and architecture
+\cite{cl-overview}. This classification is not strict, and there is often overlap between the categories. To
+give some examples of methods from different categories, EWC \cite{ewc} falls under regularization, GEM
+\cite{gem} is a dual replay- and optimization-based approach, Side-Tuning \cite{side-tuning} is a
+representational method, and Piggyback \cite{piggyback} is an architectural method. The methods we explore
+and implement for \texttt{day-in-the-life} fall under replay (DER \cite{der}) and representation (DualPrompt
+\cite{dualprompt}).
+
+\subsection{Experience Replay: CHRISTIAN}
+
+\subsection{Similarity Weighting: CHRISTIAN}
+
+\subsection{Prompting in Continual Learning: MARIA}
+Prompting appeared as a representational approach instructing a pretrained model to adapt to new knowledge in
+the continual learning setting in L2P \cite{l2p}. Instead of relying on example memorization and replay, the
+knowledge about new tasks is injected into the model via training a small pool of parameters (called prompts)
+that are selected and added to input tokens.
+
+DualPrompt \cite{dualprompt} is a method inspired by L2P. It also adds a small set of new parameters
+(prompts) to train on top of a frozen backbone to instruct the large model to learn sequentially arriving
+tasks. Typically, prompts constitute 0.2-0.6\% of the full model size. In DualPrompt, prompts are explicitly
+divided into task-specific and task-invariant instructions, which gives a sizable increase in performance as
+compared to the original L2P framework. All the parameters are trained together with a learnable classifier
+(the target task in the DualPrompt paper is classification). At test time, the prompt parameters are
+prepended to the embedding feature extracted from the frozen backbone model in the multi-head attention
+layers, which is then sent to the rest of the model.
+
+\section{Methodology}
+We are contributing to the \texttt{day-in-the-life} benchmark in three directions: methods that we test on
+the benchmark, the infrastructure of the benchmark’s repository, and datasets. The new methods were tested on
+the \texttt{day-in-the-life}
+
+\subsection{Backbone Model}
+% just describe qwen vl instruct in 2 sentences, mention different parameter counts
+We considered multiple base models to benchmark, fine-tune and test our CL algorithms on; these included the
+Qwen, SmolVLM, and Gemma model families. During our discussions, we landed on a few highest priority
+characteristics for selecting the default base model: ease of use and access (open-source), size (to increase
+the accessibility of the benchmark), quality and breadth of documentation (for dependable baseline
+performance), and community adoption (familiarity, edge-case debugging, guidance). Taking these criteria into
+account, we arrived at \href{https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct}{Qwen3-VL-2B-Instruct}. This
+model is well documented and popular within the community, supports vision and text, and small enough to fit
+on the commonly-accessible Nvidia L4. In addition, its performance on many datasets lies in the ``sweet
+spot'': not so strong that the model is saturated, obfuscating the results between different CL algorithms,
+and not so weak that additional training would yield negligible benefit. Finally, the suite of Qwen3-VL
+models range in size from 2B to 32B parameters, allowing benchmarkers with greater compute resources to upscale.
+
+\subsection{DER Implementation: CHRISTIAN}
+
+\subsection{Similarity Weighting Implementation: CHRISTIAN}
+
+\subsection{DualPrompt Implementation: MARIA}
+
+\subsection{New Datasets: AKSEL}
+Due to the variety of datasets, GPUs, and contributors, a standard contribution and benchmarking pipeline had
+to be formed and agreed to. The per-dataset deliverable consisted of
+
+\begin{enumerate}
+		\item A function to download and save the raw data
+		\item A pre-processing function to convert the data into desired form (i.e. raw tensor -> image)
+		\item A loader function to download the processed dataset from a predetermined location on disk
+		\item A configuration dictionary with context, prompting, and post-processing to ensure the LLM's answer
+				format matched the dataset's provided answer format
+		\item Documentation on the performance of the benchmark LLM out-of-the-box, after 1 epoch of LoRA
+				finetuning, and after 5 epochs of finetuning
+\end{enumerate}
+
+\subsection{Benchmarking Protocol and Evaluation Metrics: AKSEL}
+
+\subsection{Changes to Processing Existing Datasets: Maria}
+
+\section{Experimental Results}
+
+\subsection{Qwen-4b Performance Reproduction: AKSEL}
+
+\subsection{New Methods' Performance: CHIRSTIAN and MARIA}
+
+\subsection{Ablations for Replay and Similarity Weighting: CHIRSTIAN}
+
+\subsection{Learning Rate Ablations for Baseline Training: MARIA}
+
+\subsection{DualPrompt Ablations: MARIA}
+
+\section{Further Discussion}
+
+\subsection{Challenges and Limitations: CHRISTIAN}
+
+\subsection{Future Directions: AKSEL}
+
+\section{Conclusion}
+
+\subsection{Summary of Findings: ALL}
+
+\subsection{Contributions: ALL}
+
+Contributions of each team member:
+\begin{itemize}
+		\item Aksel:
+		\item Christian:
+		\item Maria:
+\end{itemize}
+
+\section*{Acknowledgments}
+We are grateful to Prof. Richard Zemel, Thomas Zollo, and Amogh Inamdar for their mentorship and advice in this project.
+
+\section*{Code Availability}
+All the code used in this project is available at \url{https://github.com/AmoghSInamdar/day-in-the-life}.
+
+% use chicago style citations
+\begin{thebibliography}{00}
+
+		\bibitem{cl-overview}
+		Wang, Liyuan, Xingxing Zhang, Hang Su, and Jun Zhu. "A comprehensive survey of continual learning: Theory,
+		method and application." IEEE transactions on pattern analysis and machine intelligence 46, no. 8 (2024): 5362-5383.
+
+		\bibitem{ewc}
+		Kirkpatrick, James, Razvan Pascanu, Neil Rabinowitz, Joel Veness, Guillaume Desjardins, Andrei A. Rusu,
+		Kieran Milan et al. "Overcoming catastrophic forgetting in neural networks." Proceedings of the national
+		academy of sciences 114, no. 13 (2017): 3521-3526.
+
+		\bibitem{gem}
+		Lopez-Paz, David, and Marc'Aurelio Ranzato. "Gradient episodic memory for continual learning." Advances in
+		neural information processing systems 30 (2017).
+
+		\bibitem{side-tuning}
+		Zhang, Jeffrey O., Alexander Sax, Amir Zamir, Leonidas Guibas, and Jitendra Malik. "Side-tuning: a baseline
+		for network adaptation via additive side networks." In European conference on computer vision, pp. 698-714.
+		Cham: Springer International Publishing, 2020.
+
+		\bibitem{piggyback}
+		Mallya, Arun, Dillon Davis, and Svetlana Lazebnik. "Piggyback: Adapting a single network to multiple tasks
+		by learning to mask weights." In Proceedings of the European conference on computer vision (ECCV), pp. 67-82. 2018.
+
+		\bibitem{der}
+		Buzzega, Pietro, Matteo Boschini, Angelo Porrello, Davide Abati, and Simone Calderara. "Dark experience for
+		general continual learning: a strong, simple baseline." Advances in neural information processing systems
+		33 (2020): 15920-15930.
+
+		\bibitem{dualprompt}
+		Wang, Zifeng, Zizhao Zhang, Sayna Ebrahimi, Ruoxi Sun, Han Zhang, Chen-Yu Lee, Xiaoqi Ren et al.
+		"Dualprompt: Complementary prompting for rehearsal-free continual learning." In European conference on
+		computer vision, pp. 631-648. Cham: Springer Nature Switzerland, 2022.
+
+		\bibitem{l2p}
+		Wang, Zifeng, Zizhao Zhang, Chen-Yu Lee, Han Zhang, Ruoxi Sun, Xiaoqi Ren, Guolong Su, Vincent Perot,
+		Jennifer Dy, and Tomas Pfister. "Learning to prompt for continual learning." In Proceedings of the IEEE/CVF
+		conference on computer vision and pattern recognition, pp. 139-149. 2022.
+
+		\bibitem{qwen3vl}
+		Bai, Shuai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng et al. "Qwen3-vl
+		technical report." arXiv preprint arXiv:2511.21631 (2025).
+
+\end{thebibliography}
+
+\raggedbottom
+
+\section*{Appendix}
+
+\raggedbottom
+
+\end{document}
