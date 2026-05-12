@@ -55,7 +55,12 @@ reasoning through hard questions, etc. This manuscript describes our contributio
 (infrastructure, datasets, and methods) to the larger \texttt{day-in-the-life} benchmark. Our main additions
 and findings are the following:
 \begin{itemize}
-		\item For the replay side of Continual Learning, we implemented Dark Experience Replay (DER++) inside the benchmark. In addition, we designed a buffer management policy that allocates buffer capacity based on task similarity rather than uniform reservoir. The intention here was that storing logits along with raw samples, and protecting tasks that are most distinct from the current one, would reduce forgetting more than basic Experience Replay (ER). [Initial four-task results were more nuanced than expected, so a follow-up experiment showed….]
+		\item For the replay side of Continual Learning, we implemented Dark Experience Replay (DER++) inside the
+				benchmark. In addition, we designed a buffer management policy that allocates buffer capacity based on
+				task similarity rather than uniform reservoir. The intention here was that storing logits along with raw
+				samples, and protecting tasks that are most distinct from the current one, would reduce forgetting more
+				than basic Experience Replay (ER). [Initial four-task results were more nuanced than expected, so a
+				follow-up experiment showed….]
 		\item Sth about DualPrompt
 		\item Sth about new datasets and infrastructure for them
 \end{itemize}
@@ -155,7 +160,8 @@ collation. Training on a batch combines current-task examples with sampled
 replay examples and uses a three-term loss:
 
 \begin{equation}
-		\mathcal{L} = \mathrm{CE}(\text{current}) + \alpha \cdot \mathrm{MSE}(\text{replay logits}) + \beta \cdot \mathrm{CE}(\text{replay labels})
+		\mathcal{L} = \mathrm{CE}(\text{current}) + \alpha \cdot \mathrm{MSE}(\text{replay logits}) + \beta \cdot
+		\mathrm{CE}(\text{replay labels})
 \end{equation}
 
 The first term is the standard cross-entropy loss on the current task. The
@@ -185,7 +191,8 @@ rebalanced. For each prior task $i$ in the buffer, the dissimilarity to the
 upcoming task is computed as:
 
 \begin{equation}
-		d_i = \max\!\left(1 - \mathrm{cos\_sim}\!\left(\mathrm{embed}(T_i),\, \mathrm{embed}(T_{\text{new}})\right),\; 0.01\right)
+		d_i = \max\!\left(1 - \mathrm{cos\_sim}\!\left(\mathrm{embed}(T_i),\,
+		\mathrm{embed}(T_{\text{new}})\right),\; 0.01\right)
 \end{equation}
 
 We clip the dissimilarity at a small positive value so that even
@@ -344,7 +351,8 @@ bounding box targets were normalized to $[0, 1]$, or $[0, 1,000]$ space, or expe
 \section{Further Discussion}
 
 \subsection{Challenges and Limitations: CHRISTIAN}
-The DER++ and similarity buffer analysis had the following limitations. Tasks are still learned sequentially without revisiting (once a dataset is visited in the 8-day curriculum, it is not seen
+The DER++ and similarity buffer analysis had the following limitations. Tasks are still learned sequentially
+without revisiting (once a dataset is visited in the 8-day curriculum, it is not seen
 again), which is farther from the Day-in-the-Life goal of mimicking how
 humans learn through spaced rehearsal across topics. The buffer size remains
 a small fraction of per-task training data, leaving limited room for
@@ -440,10 +448,13 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 		computer vision, pp. 631-648. Cham: Springer Nature Switzerland, 2022.
 
 		\bibitem{mir}
-		Aljundi, Rahaf, Eugene Belilovsky, Tinne Tuytelaars, Laurent Charlin, Massimo Caccia, Min Lin, and Lucas Page-Caccia. "Online continual learning with maximal interfered retrieval." Advances in neural information processing systems 32 (2019).
+		Aljundi, Rahaf, Eugene Belilovsky, Tinne Tuytelaars, Laurent Charlin, Massimo Caccia, Min Lin, and Lucas
+		Page-Caccia. "Online continual learning with maximal interfered retrieval." Advances in neural information
+		processing systems 32 (2019).
 
 		\bibitem{gss}
-		Aljundi, Rahaf, Min Lin, Baptiste Goujaud, and Yoshua Bengio. "Gradient based sample selection for online continual learning." Advances in neural information processing systems 32 (2019).
+		Aljundi, Rahaf, Min Lin, Baptiste Goujaud, and Yoshua Bengio. "Gradient based sample selection for online
+		continual learning." Advances in neural information processing systems 32 (2019).
 
 		\bibitem{fomo-in-flux}
 		Roth, Karsten, Vishaal Udandarao, Sebastian Dziadzio, Ameya Prabhu, Mehdi Cherti, Oriol Vinyals, Olivier
@@ -451,7 +462,9 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 		Pretraining." arXiv preprint arXiv:2408.14471 (2024).
 
 		\bibitem{mind-the-gap}
-		Liang, Victor Weixin, Yuhui Zhang, Yongchan Kwon, Serena Yeung, and James Y. Zou. "Mind the gap: Understanding the modality gap in multi-modal contrastive representation learning." Advances in Neural Information Processing Systems 35 (2022): 17612-17625.
+		Liang, Victor Weixin, Yuhui Zhang, Yongchan Kwon, Serena Yeung, and James Y. Zou. "Mind the gap:
+		Understanding the modality gap in multi-modal contrastive representation learning." Advances in Neural
+		Information Processing Systems 35 (2022): 17612-17625.
 
 		\bibitem{l2p}
 		Wang, Zifeng, Zizhao Zhang, Chen-Yu Lee, Han Zhang, Ruoxi Sun, Xiaoqi Ren, Guolong Su, Vincent Perot,
@@ -461,8 +474,6 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 		\bibitem{qwen3vl}
 		Bai, Shuai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng et al. "Qwen3-vl
 		technical report." arXiv preprint arXiv:2511.21631 (2025).
-
-
 
 \end{thebibliography}
 
