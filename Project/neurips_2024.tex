@@ -55,7 +55,7 @@ reasoning through hard questions, etc. This manuscript describes our contributio
 (infrastructure, datasets, and methods) to the larger \texttt{day-in-the-life} benchmark. Our main additions
 and findings are the following:
 \begin{itemize}
-		\item Sth about DER and similarity stuff
+		\item For the replay side of Continual Learning, we implemented Dark Experience Replay (DER++) inside the benchmark. In addition, we designed a buffer management policy that allocates buffer capacity based on task similarity rather than uniform reservoir. The intention here was that storing logits along with raw samples, and protecting tasks that are most distinct from the current one, would reduce forgetting more than basic Experience Replay (ER). [Initial four-task results were more nuanced than expected, so a follow-up experiment showed….]
 		\item Sth about DualPrompt
 		\item Sth about new datasets and infrastructure for them
 \end{itemize}
@@ -71,8 +71,43 @@ and implement for \texttt{day-in-the-life} fall under replay (DER \cite{der}) an
 \cite{dualprompt}).
 
 \subsection{Experience Replay: CHRISTIAN}
+Replay is considered one of the simplest and most effective methods to
+handle catastrophic forgetting. Within replay, basic Experience Replay keeps a
+small buffer of past examples and trains on a mix of current and replayed
+samples. Buzzega et al. \cite{der} proposed Dark Experience Replay (DER and
+DER++), which adds the model's own past output logits to the buffer and uses an
+MSE distillation loss to keep current predictions close to those stored logits.
+DER++ further regularizes against the stored hard labels with a second
+cross-entropy loss term. The intuition is that logits encode richer information
+than labels alone, so matching them gives stronger preservation of existing
+knowledge. Buzzega et al. showed DER++ beats ER and several other baselines
+across CIFAR and Tiny ImageNet variants.
 
 \subsection{Similarity Weighting: CHRISTIAN}
+A separate question is which examples should fill the replay buffer. Aljundi
+et al. proposed Maximally Interfered Retrieval (MIR) \cite{mir}, which concerns
+selecting optimal examples from the buffer by deciding which stored examples to
+replay based on whose loss would most increase under the current update.
+Aljundi et al. also introduced Gradient-based Sample Selection (GSS)
+\cite{gss}, which populates the buffer with samples that maximize gradient
+diversity, on a sample-level rather than task-level. Both MIR and GSS target
+buffer management, but neither directly addresses how to distribute buffer capacity
+across tasks.
+
+Roth et al.'s FoMo-in-Flux \cite{fomo-in-flux} is one of the closest recent
+benchmarking studies to this project. They study continual pretraining of
+multimodal models and look at how to split the training mix between
+pretraining data, downstream task data, and buffer contents. However, they
+leave open the question of how the buffer itself should be partitioned across
+past tasks, which is the gap we tried to fill.
+
+The idea that tasks have distinct geometric structure in embedding space comes
+from Liang et al.'s Mind the Gap \cite{mind-the-gap}, which shows that
+embedding representations cluster by concept in pretrained models. This is
+what makes a similarity-aware buffer policy plausible: if one can measure how
+similar two tasks are by comparing their mean embeddings, one can use that to
+decide how much buffer space each task requires after the model is trained on
+that task.
 
 \subsection{Prompting in Continual Learning: MARIA}
 Prompting appeared as a representational approach instructing a pretrained model to adapt to new knowledge in
@@ -109,8 +144,71 @@ and not so weak that additional training would yield negligible benefit. Finally
 models range in size from 2B to 32B parameters, allowing benchmarkers with greater compute resources to upscale.
 
 \subsection{DER Implementation: CHRISTIAN}
+To implement DER++, we extend the \texttt{day-in-the-life} Experience Replay
+trainer, which also serves as a baseline for determining whether logit
+distillation actually helps. Our DER++ trainer follows Buzzega et al.
+\cite{der} closely. The replay buffer is extended so each stored example
+carries three things: the original input tokens, the labels, and the model's
+output logits at training time. To keep memory usage reasonable, logits are
+stored as float16 numpy arrays and reconstructed into padded tensors during
+collation. Training on a batch combines current-task examples with sampled
+replay examples and uses a three-term loss:
+
+\begin{equation}
+		\mathcal{L} = \mathrm{CE}(\text{current}) + \alpha \cdot \mathrm{MSE}(\text{replay logits}) + \beta \cdot \mathrm{CE}(\text{replay labels})
+\end{equation}
+
+The first term is the standard cross-entropy loss on the current task. The
+MSE term penalizes divergence between the model's current logits on a
+replayed example and the logits that were stored when that example was first
+seen. The second cross-entropy term applies the original hard labels to the
+same replayed examples. The two coefficients $\alpha$ and $\beta$ have been
+% TODO: replace with final hyperparameter sweep result
+tuned as hyperparameters, resulting in an optimal setting of $\alpha = \beta =
+0.5$ to balance weighting equally between the logit-distillation and
+label-replay loss terms.
 
 \subsection{Similarity Weighting Implementation: CHRISTIAN}
+We also implement two similarity-weighted buffer variants (one each for ER
+and DER++). The similarity-weighted buffer allocates slots to past tasks in
+inverse proportion to how similar each one is to the current task, with a
+small floor so that no task is fully evicted. For each task, we compute a
+centroid embedding by sampling 32 examples, running them through the
+pretrained base model, and mean-pooling the last hidden state across
+non-padding tokens. This gives one vector per task that summarizes where the
+task lives in representation space. Centroids are computed once before
+training begins, using the frozen pretrained model, so that the similarity
+metric does not drift as the model fine-tunes.
+
+When the model finishes task A and is about to start task B, the buffer is
+rebalanced. For each prior task $i$ in the buffer, the dissimilarity to the
+upcoming task is computed as:
+
+\begin{equation}
+		d_i = \max\!\left(1 - \mathrm{cos\_sim}\!\left(\mathrm{embed}(T_i),\, \mathrm{embed}(T_{\text{new}})\right),\; 0.01\right)
+\end{equation}
+
+We clip the dissimilarity at a small positive value so that even
+near-identical tasks get nonzero weight in the formula, then normalize across
+all prior tasks and translate the weights into slot counts. Letting $B$ denote
+total buffer size, $K$ the number of prior tasks, and $\text{floor}$ a
+per-task minimum (set to 2 in our implementation):
+
+\begin{equation}
+		n_i = \text{floor} + \mathrm{round}\!\left(w_i \cdot (B - \text{floor} \cdot K)\right)
+\end{equation}
+
+After computing the new allocation, any task that exceeds its quota has the
+excess randomly evicted, and the new task fills the remaining slots. As an
+example, suppose the buffer holds 100 slots and there are three prior tasks
+A, B, C with cosine similarities to the new task D of $0.9$, $0.5$, and $0.1$
+respectively. After similarity normalization, Task A receives roughly 7
+slots, Task B 33 slots, and Task C 60 slots, since C is the most distinct
+from D. Meanwhile, knowledge of Task A is largely allowed to drift during
+training, since training on D will keep Task A's representations refreshed
+by virtue of their similarity. The same allocation logic is reused across
+both Sim-ER and Sim-DER++ trainers; the only difference is whether logits are
+stored alongside the buffer entries.
 
 \subsection{DualPrompt Implementation: MARIA}
 
@@ -231,6 +329,10 @@ and corruption of critical answer format instruction. The compromise solution re
 \texttt{mcq\_letter\_format} that invoked a minimal postprocessing function to extract the answer and convert
 it to the correct format.
 
+\paragraph*{3D Coordinate Matching} There were some hidden bugs in the 3D coordinate prediction, causing
+massive error and disparity with the published eval. It was necessary to inform the base VLM model as to whether the
+bounding box targets were normalized to $[0, 1]$, or $[0, 1,000]$ space, or expected in raw pixel location space.
+
 \subsection{New Methods' Performance: CHIRSTIAN and MARIA}
 
 \subsection{Ablations for Replay and Similarity Weighting: CHIRSTIAN}
@@ -242,8 +344,31 @@ it to the correct format.
 \section{Further Discussion}
 
 \subsection{Challenges and Limitations: CHRISTIAN}
+The DER++ and similarity buffer analysis had the following limitations. Tasks are still learned sequentially without revisiting (once a dataset is visited in the 8-day curriculum, it is not seen
+again), which is farther from the Day-in-the-Life goal of mimicking how
+humans learn through spaced rehearsal across topics. The buffer size remains
+a small fraction of per-task training data, leaving limited room for
+similarity-based redistribution to take effect, and the most recent task
+continues to occupy a disproportionate share of capacity. Task centroids used
+for similarity weighting are pre-computed from the frozen base model rather
+than updated as the model fine-tunes, so the similarity metric can drift from
+what the current model actually represents. Lastly all ablations were also run with
+a single seed, so variance across runs is not yet quantified to determine the effect of noise.
 
-\subsection{Future Directions: AKSEL}
+\subsection{Future Directions}
+
+There's lots of room for growth for this benchmark. Broadly speaking, that includes api and customization
+improvements, code hardening and bug squashing, more datasets, more CL algorithms, and more submissions to
+the leaderboard.
+
+We will focus on the work outstanding for our own team. We plan to implement a PyTorch Lightning training
+loop to supplement the existing HuggingFace Trainer, PyTorch SFT loop, and tensorflow SFT loop. This would
+permit pytorch-lightning-based CL algorithms and training solutions.
+
+In addition, we plan to implement a model-merging CL algorithm following the example from ``A Practitioner's
+Guide to Continual Multimodal Pretraining.'' \cite{fomo-in-flux}. This CL algorithm performed very well in
+the paper's experiments - consistently outperforming the other methods - and is a very different approach to
+the replay and prompting methods we have implemented so far.
 
 \section{Conclusion}
 
@@ -258,7 +383,18 @@ Contributions of each team member:
 				selection of default VLM model. \textit{Future Work} pytorch-lightning training loop implementation;
 				model-merging CL algorithm, following the example from ``A Practitioner's Guide to Continual Multimodal
 				Pretraining.'' \cite{fomo-in-flux}
-		\item Christian:
+		\item Christian: Implementation of Dark Experience Replay (DER++) trainer
+				faithful to Buzzega et al. \cite{der}; design and
+				implementation of a similarity-weighted buffer management policy that
+				allocates buffer capacity to prior tasks in inverse proportion to their
+				cosine similarity to the current task in pretrained embedding space, applied
+				to both ER and DER++ to produce Sim-ER and Sim-DER++ trainers; initial
+				five-way ablation comparing No Replay, Uniform ER, Uniform DER++, Sim-ER,
+				and Sim-DER++ on a four-task subset of the curriculum. \textit{Future Work:}
+				hyperparameter sweeps on buffer size and per-task recency cap; dynamic
+				recomputation of task centroids during training rather than freezing them
+				at the start; multi-seed evaluation on the full 8-dataset interleaved
+				curriculum.
 		\item Maria:
 \end{itemize}
 
@@ -303,6 +439,20 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 		"Dualprompt: Complementary prompting for rehearsal-free continual learning." In European conference on
 		computer vision, pp. 631-648. Cham: Springer Nature Switzerland, 2022.
 
+		\bibitem{mir}
+		Aljundi, Rahaf, Eugene Belilovsky, Tinne Tuytelaars, Laurent Charlin, Massimo Caccia, Min Lin, and Lucas Page-Caccia. "Online continual learning with maximal interfered retrieval." Advances in neural information processing systems 32 (2019).
+
+		\bibitem{gss}
+		Aljundi, Rahaf, Min Lin, Baptiste Goujaud, and Yoshua Bengio. "Gradient based sample selection for online continual learning." Advances in neural information processing systems 32 (2019).
+
+		\bibitem{fomo-in-flux}
+		Roth, Karsten, Vishaal Udandarao, Sebastian Dziadzio, Ameya Prabhu, Mehdi Cherti, Oriol Vinyals, Olivier
+		Hénaff, Samuel Albanie, Matthias Bethge, and Zeynep Akata. "A Practitioner's Guide to Continual Multimodal
+		Pretraining." arXiv preprint arXiv:2408.14471 (2024).
+
+		\bibitem{mind-the-gap}
+		Liang, Victor Weixin, Yuhui Zhang, Yongchan Kwon, Serena Yeung, and James Y. Zou. "Mind the gap: Understanding the modality gap in multi-modal contrastive representation learning." Advances in Neural Information Processing Systems 35 (2022): 17612-17625.
+
 		\bibitem{l2p}
 		Wang, Zifeng, Zizhao Zhang, Chen-Yu Lee, Han Zhang, Ruoxi Sun, Xiaoqi Ren, Guolong Su, Vincent Perot,
 		Jennifer Dy, and Tomas Pfister. "Learning to prompt for continual learning." In Proceedings of the IEEE/CVF
@@ -312,10 +462,7 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 		Bai, Shuai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng et al. "Qwen3-vl
 		technical report." arXiv preprint arXiv:2511.21631 (2025).
 
-		\bibitem{fomo-in-flux}
-		Roth, Karsten, Vishaal Udandarao, Sebastian Dziadzio, Ameya Prabhu, Mehdi Cherti, Oriol Vinyals, Olivier
-		Hénaff, Samuel Albanie, Matthias Bethge, and Zeynep Akata. "A Practitioner's Guide to Continual Multimodal
-		Pretraining." arXiv preprint arXiv:2408.14471 (2024).
+
 
 \end{thebibliography}
 
