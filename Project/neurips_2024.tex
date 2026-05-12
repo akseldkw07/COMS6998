@@ -305,11 +305,13 @@ The final step is to record the results in the \texttt{day\_in\_the\_life/datase
 addition to the quantitative results included in the table, qualitative observations, shortcuts, compromises,
 caveats, etc. should be appended to the bottom section.
 
-\begin{figure}[h]
+\begin{figure}[H]
 		\centering
 		\includegraphics[width=0.95\textwidth]{./aksel_img/benchmark-table-snippet.png}
 		\caption{A snippet of the dataset benchmarking table.}
 \end{figure}
+
+The full table of benchmarking results is included in the Appendix as Figure~\ref{fig:benchmark-results}.
 
 \subsection{Changes to Processing Existing Datasets: Maria}
 
@@ -320,8 +322,7 @@ caveats, etc. should be appended to the bottom section.
 Before testing any CL algorithms, it's necessary to ensure that the baseline performance of the
 Qwen3-VL-2B-Instruct model on the datasets matches the published numbers. We've outlined many of the hurdles
 and bugs overcome in this process in Section~\ref{sec:benchmarking}, but here we'll focus on some of the
-gray-area decisions and
-tradeoffs made.
+gray-area decisions and tradeoffs made.
 
 \paragraph*{Inference Settings} The Qwen3-VL Tech Report prescribes \texttt{temperature=1.0, top\_p=1.0,
 top\_k=40, presence\_penalty=2.0, max\_tokens=32768} for the small Instruct family (2B/4B/8B). The pre-fix
@@ -480,6 +481,13 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 \raggedbottom
 
 \section*{Appendix}
+
+\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.95\textwidth]{./aksel_img/benchmark-table-all.png}
+		\caption{The full benchmark result table.}
+		\label{fig:benchmark-results}
+\end{figure}
 
 \raggedbottom
 
