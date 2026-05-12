@@ -176,16 +176,41 @@ An important part of the dataset delivery pipeline is the benchmarking step. The
 debugging, validation of the Qwen3 published benchmark score, a mental heuristic for the dataset questions,
 and a comparison point for the CL algorithm vs a simple LoRA SFT approach.
 
-The first step is drafting an eval config that results in optimal baseline performance. For example, most
-benchmarks expect a single-token response. In the absence of additional instruction, the LLM tends to produce
+The first step is matching the experiment setup to the conditions used by the Qwen researchers when
+conducting the baseline evaluation. In the case that we created our own train/eval/test
+splits, we concatenate the splits; the Qwen3 benchmarking was done \textbf{across the entire dataset}.
+Additional sources of noise include thinking vs instruct mode, the maximum internal sequence length, and the
+scoring function (exact match accuracy, relaxed match accuracy, MSE, CE loss, etc)
+
+The second step is drafting an eval config that results in optimal baseline performance. For example, most
+datasets expect a single-token response. In the absence of additional instruction, the LLM tends to produce
 a verbose answer, which fails the regex match every time. Providing clear instruction denoises the training
 signal in backprop, improving performance and interpretability.
+
+The third step is to iteratively run the baseline evaluation until the score matches the published Qwen3
+number. This is a sanity check for the dataset and the evaluation pipeline. \textbf{Many} bugs were caught
+and fixed during this step.
+
+The fourth step is to run a simple LoRA SFT on the dataset for one and five epochs. This step places the
+model on the underperformance <--> saturation spectrum.
+
+The final step is to record the results in the \texttt{day\_in\_the\_life/datasets/README.md} table. In
+addition to the quantitative results included in the table, qualitative observations, shortcuts, compromises,
+caveats, etc. should be appended to the bottom section
+
+\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.95\textwidth]{./aksel_img/benchmark-table-snippet.png}
+\end{figure}
 
 \subsection{Changes to Processing Existing Datasets: Maria}
 
 \section{Experimental Results}
 
-\subsection{Qwen-4b Performance Reproduction: AKSEL}
+\subsection{Qwen-4b Performance Reproduction}
+
+Before testing any CL algorithms, it's necessary to ensure that the baseline performance of the
+Qwen3-VL-2B-Instruct model on the datasets matches the published numbers.
 
 \subsection{New Methods' Performance: CHIRSTIAN and MARIA}
 
@@ -209,7 +234,11 @@ signal in backprop, improving performance and interpretability.
 
 Contributions of each team member:
 \begin{itemize}
-		\item Aksel:
+		\item Aksel: Initial integration tests, cleanup, and bug fixes; contribution and evaluation of 8 novel
+				datasets; introduction and implementation of standard dataset onboarding pipeline; scoping and
+				selection of default VLM model. \textit{Future Work} pytorch-lightning training loop implementation;
+				model-merging CL algorithm, following the example from ``A Practitioner's Guide to Continual Multimodal
+				Pretraining.'' \cite{fomo-in-flux}
 		\item Christian:
 		\item Maria:
 \end{itemize}
@@ -263,6 +292,11 @@ All the code used in this project is available at \url{https://github.com/AmoghS
 		\bibitem{qwen3vl}
 		Bai, Shuai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng et al. "Qwen3-vl
 		technical report." arXiv preprint arXiv:2511.21631 (2025).
+
+		\bibitem{fomo-in-flux}
+		Roth, Karsten, Vishaal Udandarao, Sebastian Dziadzio, Ameya Prabhu, Mehdi Cherti, Oriol Vinyals, Olivier
+		Hénaff, Samuel Albanie, Matthias Bethge, and Zeynep Akata. "A Practitioner's Guide to Continual Multimodal
+		Pretraining." arXiv preprint arXiv:2408.14471 (2024).
 
 \end{thebibliography}
 
